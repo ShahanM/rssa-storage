@@ -1,4 +1,4 @@
-from ..dbconfig import Base
+from dbconfig import Base
 from sqlalchemy.dialects.postgresql import UUID
 import sqlalchemy as sa
 import uuid

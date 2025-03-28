@@ -1,4 +1,4 @@
-from ..dbconfig import Base
+from dbconfig import Base
 from sqlalchemy.dialects.postgresql import UUID
 import sqlalchemy as sa
 import uuid
@@ -19,7 +19,9 @@ class MovieRecommendationText(Base):
 
 	sa.ForeignKeyConstraint(['movie_id'], ['movies.id'])
 
-	def __init__(self, movie_id: UUID, formal: str, informal: str):
+	def __init__(self, movie_id: UUID, formal: str, informal: str, source: str, model: str):
 		self.movie_id = movie_id
 		self.formal = formal
 		self.informal = informal
+		self.source = source
+		self.model = model
