@@ -6,14 +6,10 @@ Create Date: 2025-08-19 14:48:04.589714
 
 """
 
-import uuid
-from datetime import datetime, timezone
 from typing import Sequence, Union
 
 import sqlalchemy as sa
 from alembic import op
-from sqlalchemy.dialects import postgresql
-from sqlalchemy.dialects.postgresql import UUID
 
 # revision identifiers, used by Alembic.
 revision: str = '0a7f9a5a38bc'
