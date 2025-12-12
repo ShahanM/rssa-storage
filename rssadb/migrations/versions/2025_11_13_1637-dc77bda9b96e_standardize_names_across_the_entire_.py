@@ -143,7 +143,7 @@ PK_RENAME_MAP: dict[str, str] = {
     # table_name: old_pk_name
     'access_logs': 'access_log_pkey',
     'api_keys': 'api_keys_pkey',
-    'construct_items': 'construct_items_pkey',
+    'construct_items': 'construct_item_pkey',
     'construct_scales': 'construct_scales_pkey',
     'demographics': 'demographics_pkey',
     'feedbacks': 'feedback_pkey',
