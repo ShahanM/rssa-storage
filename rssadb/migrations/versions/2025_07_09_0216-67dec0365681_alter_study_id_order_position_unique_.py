@@ -21,30 +21,30 @@ TABLE_NAME = 'study_step'
 
 
 def upgrade() -> None:
-	op.drop_index(INDEX_AND_CONSTRAINT_NAME, table_name=TABLE_NAME)
-	print('Index dropped successfully.')
+    op.drop_index(INDEX_AND_CONSTRAINT_NAME, table_name=TABLE_NAME)
+    print('Index dropped successfully.')
 
-	print(
-		f"Adding new unique constraint '{INDEX_AND_CONSTRAINT_NAME}' to '{TABLE_NAME}' as DEFERRABLE INITIALLY DEFERRED..."
-	)
-	op.create_unique_constraint(
-		constraint_name=INDEX_AND_CONSTRAINT_NAME,
-		table_name=TABLE_NAME,
-		columns=['study_id', 'order_position'],
-		deferrable=True,
-		initially='deferred',
-	)
+    print(
+        f"Adding new unique constraint '{INDEX_AND_CONSTRAINT_NAME}' to '{TABLE_NAME}' as DEFERRABLE INITIALLY DEFERRED"
+    )
+    op.create_unique_constraint(
+        constraint_name=INDEX_AND_CONSTRAINT_NAME,
+        table_name=TABLE_NAME,
+        columns=['study_id', 'order_position'],
+        deferrable=True,
+        initially='deferred',
+    )
 
 
 def downgrade() -> None:
-	op.drop_constraint(INDEX_AND_CONSTRAINT_NAME, table_name=TABLE_NAME, type_='unique')
-	print('Constraint dropped successfully.')
+    op.drop_constraint(INDEX_AND_CONSTRAINT_NAME, table_name=TABLE_NAME, type_='unique')
+    print('Constraint dropped successfully.')
 
-	print(f"Recreating unique index '{INDEX_AND_CONSTRAINT_NAME}' on '{TABLE_NAME}'...")
-	op.create_index(
-		INDEX_AND_CONSTRAINT_NAME,
-		TABLE_NAME,
-		['study_id', 'order_position'],
-		unique=True,
-	)
-	print('Unique index recreated successfully.')
+    print(f"Recreating unique index '{INDEX_AND_CONSTRAINT_NAME}' on '{TABLE_NAME}'...")
+    op.create_index(
+        INDEX_AND_CONSTRAINT_NAME,
+        TABLE_NAME,
+        ['study_id', 'order_position'],
+        unique=True,
+    )
+    print('Unique index recreated successfully.')
