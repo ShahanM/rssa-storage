@@ -163,7 +163,7 @@ PK_RENAME_MAP: dict[str, str] = {
     'study_interaction_responses': 'study_interaction_responses_pkey',
     'study_participants': 'study_participant_pkey',
     'study_steps': 'study_step_pkey',
-    'survey_constructs': 'survey_constructs_pkey',
+    'survey_constructs': 'survey_construct_pkey',
     'survey_item_responses': '',  # Note: We will create a new PK name in this migration
     'users': 'users_pkey',
 }
