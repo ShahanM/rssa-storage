@@ -156,7 +156,7 @@ PK_RENAME_MAP: dict[str, str] = {
     'participant_sessions': 'participant_sessions_pkey',
     'participant_types': 'participant_type_pkey',
     'permissions': 'permissions_pkey',
-    'scale_levels': 'scale_levels_pkey',
+    'scale_levels': 'scale_level_pkey',
     'step_pages': 'step_page_pkey',
     'studies': 'study_pkey',
     'study_conditions': 'study_condition_pkey',
