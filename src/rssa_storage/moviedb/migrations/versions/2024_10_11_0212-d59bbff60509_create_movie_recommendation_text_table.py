@@ -5,20 +5,20 @@ Revises: 25c5cdf9ee9c
 Create Date: 2024-10-11 02:12:40.391591
 
 """
-from typing import Sequence, Union
-from datetime import datetime, timezone
-from sqlalchemy.dialects.postgresql import UUID
+
 import uuid
+from collections.abc import Sequence
+from datetime import UTC, datetime
 
-from alembic import op
 import sqlalchemy as sa
-
+from alembic import op
+from sqlalchemy.dialects.postgresql import UUID
 
 # revision identifiers, used by Alembic.
 revision: str = 'd59bbff60509'
-down_revision: Union[str, None] = '25c5cdf9ee9c'
-branch_labels: Union[str, Sequence[str], None] = None
-depends_on: Union[str, Sequence[str], None] = None
+down_revision: str | None = '25c5cdf9ee9c'
+branch_labels: str | Sequence[str] | None = None
+depends_on: str | Sequence[str] | None = None
 
 
 def upgrade() -> None:
@@ -28,9 +28,8 @@ def upgrade() -> None:
         sa.Column('movie_id', UUID(as_uuid=True), nullable=False),
         sa.Column('formal', sa.Text, nullable=False),
         sa.Column('informal', sa.Text, nullable=False),
-
-        sa.Column('created_at', sa.DateTime(timezone=True), nullable=False, default=datetime.now(timezone.utc)),
-        sa.Column('updated_at', sa.DateTime(timezone=True), nullable=False, default=datetime.now(timezone.utc))
+        sa.Column('created_at', sa.DateTime(timezone=True), nullable=False, default=datetime.now(UTC)),
+        sa.Column('updated_at', sa.DateTime(timezone=True), nullable=False, default=datetime.now(UTC)),
     )
 
     op.create_index('movie_recommendation_text_id_idx', 'movie_recommendation_text', ['movie_id'], unique=True)

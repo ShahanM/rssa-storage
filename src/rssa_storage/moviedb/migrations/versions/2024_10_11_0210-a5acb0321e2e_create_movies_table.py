@@ -1,24 +1,23 @@
 """create movies table
 
 Revision ID: a5acb0321e2e
-Revises: 
+Revises:
 Create Date: 2024-10-11 02:10:12.035988
 
 """
-from typing import Sequence, Union
-from datetime import datetime, timezone
-from sqlalchemy.dialects.postgresql import UUID
+
 import uuid
+from collections.abc import Sequence
 
-from alembic import op
 import sqlalchemy as sa
-
+from alembic import op
+from sqlalchemy.dialects.postgresql import UUID
 
 # revision identifiers, used by Alembic.
 revision: str = 'a5acb0321e2e'
-down_revision: Union[str, None] = None
-branch_labels: Union[str, Sequence[str], None] = None
-depends_on: Union[str, Sequence[str], None] = None
+down_revision: str | None = None
+branch_labels: str | Sequence[str] | None = None
+depends_on: str | Sequence[str] | None = None
 
 
 def upgrade() -> None:
@@ -40,7 +39,7 @@ def upgrade() -> None:
         sa.Column('poster', sa.String, nullable=False),
         sa.Column('count', sa.Integer, nullable=False),
         sa.Column('rank', sa.Integer, nullable=False),
-        sa.Column('poster_identifier', sa.String, nullable=False)
+        sa.Column('poster_identifier', sa.String, nullable=False),
     )
 
     op.create_index('movielens_id_idx', 'movies', ['movielens_id'], unique=True)
@@ -51,4 +50,3 @@ def downgrade() -> None:
     op.drop_index('movielens_id_idx')
     op.drop_index('imdb_id_idx')
     op.drop_table('movies')
-

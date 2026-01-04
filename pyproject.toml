@@ -1,22 +1,60 @@
+[project]
+name = "rssa-storage"
+version = "0.1.0"
+description = "Shared SQLAlchemy models and migrations for RSSA services"
+readme = "README.md"
+requires-python = ">=3.11"
+dependencies = [
+	"sqlalchemy>=2.0",
+	"alembic>=1.13",
+	"pydantic>=2.0",
+	"psycopg[binary]>=3.2",
+	"dotenv>=0.9.9",
+	"asyncpg>=0.31.0",
+	"psycopg2>=2.9.11",
+	"requests>=2.32.5",
+]
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+# DISTRIBUTION CONFIGURATION
+[tool.hatch.build.targets.wheel]
+packages = ["src/rssa_storage"]
+
+[tool.hatch.build.targets.sdist]
+include = ["src"]
+
+[dependency-groups]
+dev = [
+	"pytest>=8.0",
+	"ruff>=0.1",
+	"pylint>=3.0", # Added this
+	"pylint-sqlalchemy>=0.2", # Added this so the plugin loads
+	"requests>=2.32.5",
+	"binpickle>=0.3.4",
+]
+
 [tool.ruff]
 line-length = 120
-target-version = "py38"
+target-version = "py311"  # Updated to match project requirement
 exclude = ["__init__.py"]
 fix = true
 
 [tool.ruff.lint]
 ignore = [
 	"W191", # indentation contains tabs
-	"B008", # function call in default argument
+	# "B008", # function call in default argument (Common in Pydantic/FastAPI contexts)
 ]
 select = [
 	"E",  # Pyflakes errors
 	"W",  # Pyflakes warnings
 	"F",  # Pyflakes errors
-	"I",  # isort
+	"I",  # isort (Sorts imports automatically)
 	"C",  # flake8-comprehensions
 	"B",  # flake8-bugbear
-	"UP", # pyupgrade
+	"UP", # pyupgrade (Modernizes code to py311 standards)
 ]
 
 [tool.ruff.format]

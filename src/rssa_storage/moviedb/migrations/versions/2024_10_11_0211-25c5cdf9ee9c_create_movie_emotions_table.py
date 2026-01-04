@@ -7,20 +7,19 @@ Revises: a5acb0321e2e
 Create Date: 2024-10-11 02:11:53.846911
 
 """
-from typing import Sequence, Union
-from datetime import datetime, timezone
-from sqlalchemy.dialects.postgresql import UUID
+
 import uuid
+from collections.abc import Sequence
 
-from alembic import op
 import sqlalchemy as sa
-
+from alembic import op
+from sqlalchemy.dialects.postgresql import UUID
 
 # revision identifiers, used by Alembic.
 revision: str = '25c5cdf9ee9c'
-down_revision: Union[str, None] = 'a5acb0321e2e'
-branch_labels: Union[str, Sequence[str], None] = None
-depends_on: Union[str, Sequence[str], None] = None
+down_revision: str | None = 'a5acb0321e2e'
+branch_labels: str | Sequence[str] | None = None
+depends_on: str | Sequence[str] | None = None
 
 
 def upgrade() -> None:
@@ -36,7 +35,7 @@ def upgrade() -> None:
         sa.Column('joy', sa.Numeric, nullable=False),
         sa.Column('surprise', sa.Numeric, nullable=False),
         sa.Column('sadness', sa.Numeric, nullable=False),
-        sa.Column('trust', sa.Numeric, nullable=False)
+        sa.Column('trust', sa.Numeric, nullable=False),
     )
 
     op.create_index('movielens_emotions_id_idx', 'movie_emotions', ['movielens_id'], unique=True)
