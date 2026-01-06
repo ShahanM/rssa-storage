@@ -3,7 +3,8 @@ import uuid
 import sqlalchemy as sa
 from sqlalchemy.orm import Mapped, mapped_column
 
-from rssa_storage.shared.db_utils import NAMING_CONVENTION, DateAuditMixin, SharedModel
+from rssa_storage.shared import DateAuditMixin
+from rssa_storage.shared.db_utils import NAMING_CONVENTION, SharedModel
 
 
 class MovieBase(SharedModel, DateAuditMixin):
