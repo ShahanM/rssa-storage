@@ -19,6 +19,10 @@ from rssa_storage.shared import BaseRepository
 
 class StudyParticipantRepository(BaseRepository[StudyParticipant]):
     LOAD_ASSIGNED_CONDITION = (selectinload(StudyParticipant.study_condition),)
+    LOAD_CONDITION_AND_TYPE = (
+        selectinload(StudyParticipant.study_condition), 
+        selectinload(StudyParticipant.study_participant_type),
+    )
 
 
 class StudyParticipantTypeRepository(BaseRepository[StudyParticipantType]):

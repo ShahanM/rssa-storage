@@ -1,0 +1,32 @@
+# rssa_api/utils/generators.py
+import random
+
+ADJECTIVES = [
+    # Reds / Pinks / Oranges
+    "Amaranth", "Vermilion", "Crimson", "Scarlet", "Coral", "Peach", "Saffron", "Amber", "Russet", "Maroon",
+    # Yellows / Greens
+    "Citrine", "Gold", "Ivory", "Lime", "Chartreuse", "Emerald", "Viridian", "Jade", "Sage", "Olive",
+    # Blues / Cyans
+    "Teal", "Cyan", "Azure", "Cobalt", "Indigo", "Sapphire", "Cerulean", "Slate", "Navy", "Midnight",
+    # Purples / Violets
+    "Lavender", "Mauve", "Violet", "Amethyst", "Plum", "Orchid", "Magenta", "Fuchsia", "Byzantium", "Lilac",
+    # Grays / Blacks / Whites / Browns
+    "Silver", "Platinum", "Obsidian", "Charcoal", "Ebony", "Onyx", "Pearl", "Bronze", "Copper", "Umber"
+]
+
+NOUNS = [
+    # Mammals
+    "Badger", "Bison", "Cheetah", "Dolphin", "Elk", "Fox", "Gazelle", "Ibex", "Jaguar", "Koala",
+    "Lemur", "Lynx", "Marmot", "Narwhal", "Ocelot", "Otter", "Panda", "Pangolin", "Quokka", "Wolf",
+    # Birds
+    "Crane", "Eagle", "Falcon", "Hawk", "Heron", "Jay", "Kestrel", "Lark", "Owl", "Penguin",
+    "Raven", "Starling", "Swan", "Swift", "Toucan", "Wren",
+    # Reptiles / Amphibians / Aquatic
+    "Axolotl", "Cobra", "Gecko", "Iguana", "Manta", "Newt", "Python", "Shark", "Turtle", "Viper",
+    # Insects / Arachnids
+    "Beetle", "Mantis", "Moth", "Wasp"
+]
+
+def generate_ref_code() -> str:
+    """Generates a code like 'Viridian-Axolotl' or 'Saffron-Kestrel'."""
+    return f"{random.choice(ADJECTIVES)}-{random.choice(NOUNS)}"

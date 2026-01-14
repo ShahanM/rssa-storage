@@ -6,7 +6,7 @@ from typing import TYPE_CHECKING
 
 import sqlalchemy as sa
 from sqlalchemy.orm import Mapped, mapped_column, relationship
-
+from rssa_storage.shared.generators import generate_ref_code
 from rssa_storage.rssadb.models.rssa_base_models import RssaBase, RssaOrderedBase
 from rssa_storage.rssadb.models.survey_constructs import SurveyConstruct, SurveyScale
 from rssa_storage.shared import DateAuditMixin, SoftDeleteMixin
@@ -80,11 +80,26 @@ class StudyCondition(RssaBase, DateAuditMixin, SoftDeleteMixin):
     recommender_key: Mapped[str | None] = mapped_column()
     recommendation_count: Mapped[int] = mapped_column(default=10)
 
+    short_code: Mapped[str] = mapped_column(
+        sa.String(48),
+        nullable=False,
+        default=generate_ref_code,
+    )
+
     study_id: Mapped[uuid.UUID] = mapped_column(sa.ForeignKey('studies.id', ondelete='CASCADE'), nullable=False)
 
     study: Mapped['Study'] = relationship('Study', back_populates='study_conditions')
     study_participants: Mapped[list['StudyParticipant']] = relationship(
         'StudyParticipant', back_populates='study_condition', uselist=True, cascade='all, delete-orphan'
+    )
+
+    __table_args__ = (
+        sa.UniqueConstraint(
+            "study_id",
+            "short_code",
+            deferrable=True,
+            initially="DEFERRED"
+        ),
     )
 
 
