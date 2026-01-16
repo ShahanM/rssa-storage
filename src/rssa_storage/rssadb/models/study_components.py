@@ -6,10 +6,11 @@ from typing import TYPE_CHECKING
 
 import sqlalchemy as sa
 from sqlalchemy.orm import Mapped, mapped_column, relationship
-from rssa_storage.shared.generators import generate_ref_code
+
 from rssa_storage.rssadb.models.rssa_base_models import RssaBase, RssaOrderedBase
 from rssa_storage.rssadb.models.survey_constructs import SurveyConstruct, SurveyScale
 from rssa_storage.shared import DateAuditMixin, SoftDeleteMixin
+from rssa_storage.shared.generators import generate_ref_code
 
 if TYPE_CHECKING:
     from rssa_storage.rssadb.models.study_participants import StudyParticipant
@@ -93,14 +94,7 @@ class StudyCondition(RssaBase, DateAuditMixin, SoftDeleteMixin):
         'StudyParticipant', back_populates='study_condition', uselist=True, cascade='all, delete-orphan'
     )
 
-    __table_args__ = (
-        sa.UniqueConstraint(
-            "study_id",
-            "short_code",
-            deferrable=True,
-            initially="DEFERRED"
-        ),
-    )
+    __table_args__ = (sa.UniqueConstraint('study_id', 'short_code', deferrable=True, initially='DEFERRED'),)
 
 
 class StudyStep(RssaOrderedBase, DateAuditMixin, SoftDeleteMixin):

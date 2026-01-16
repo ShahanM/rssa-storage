@@ -670,7 +670,7 @@ def downgrade() -> None:
         'participant_study_interaction_responses',
         'payload_json',
         existing_type=postgresql.JSONB(astext_type=sa.Text()),
-        comment='\n            Stores the dynamic structured response payload (e.g., chosen item ID, list rankings, predicted scores).\n            ',
+        comment='\nStores the dynamic structured response payload (e.g., chosen item ID, list rankings, predicted scores).\n',
         existing_nullable=False,
     )
     op.alter_column(
@@ -792,7 +792,7 @@ def downgrade() -> None:
         'participant_interaction_logs',
         'payload_json',
         existing_type=postgresql.JSONB(astext_type=sa.Text()),
-        comment='\n            Stores the dynamic structured interaction payload (e.g., item clicks, hover duration, etc.).\n            ',
+        comment='\nStores the dynamic structured interaction payload (e.g., item clicks, hover duration, etc.).\n',
         existing_nullable=False,
     )
     op.drop_column('participant_interaction_logs', 'version')

@@ -3,9 +3,9 @@
 import uuid
 from collections.abc import Sequence
 from dataclasses import dataclass, field
-from typing import Any, Generic, Optional, Protocol, TypeGuard, TypeVar, get_args
+from typing import Any, Generic, Protocol, TypeGuard, TypeVar, get_args
 
-from sqlalchemy import Select, UniqueConstraint, and_, delete, func, inspect, or_, select
+from sqlalchemy import Select, UniqueConstraint, and_, func, inspect, or_, select
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.sql.base import ExecutableOption
@@ -23,14 +23,14 @@ T = TypeVar('T', bound=SharedModel)
 class RepoQueryOptions:
     """Data class to encapsulate common query options for repositories."""
 
-    ids: Optional[list[uuid.UUID]] = None
+    ids: list[uuid.UUID] | None = None
     filters: dict[str, Any] = field(default_factory=dict)
-    search_text: Optional[str] = None
+    search_text: str | None = None
     search_columns: list[str] = field(default_factory=list)
-    sort_by: Optional[str] = None
+    sort_by: str | None = None
     sort_desc: bool = False
-    limit: Optional[int] = None
-    offset: Optional[int] = None
+    limit: int | None = None
+    offset: int | None = None
     include_deleted: bool = False
     load_options: Sequence[ExecutableOption] | None = field(default_factory=list)
 
@@ -115,7 +115,7 @@ class BaseRepository(Generic[T]):
 
         return query
 
-    def _apply_soft_delete(self, query) -> Select:
+    def _apply_soft_delete(self, query: Select) -> Select:
         """Modify the query to exclude soft-deleted records.
 
         Args:
@@ -171,15 +171,22 @@ class BaseRepository(Generic[T]):
         for column in mapper.attrs:
             if hasattr(column, 'columns') and column.columns[0].unique:
                 val = getattr(instance, column.key)
-                unique_conditions.append(getattr(self.model, column.key) == val)
+                if val is not None:
+                    unique_conditions.append(getattr(self.model, column.key) == val)
 
         for constraint in getattr(self.model.__table__, 'constraints', []):
             if isinstance(constraint, UniqueConstraint):
                 col_conditions = []
+                has_null = False
+
                 for col in constraint.columns:
                     val = getattr(instance, col.name)
+                    if val is None:
+                        has_null = True
+                        break
                     col_conditions.append(getattr(self.model, col.name) == val)
-                unique_conditions.append(and_(*col_conditions))
+                if not has_null and col_conditions:
+                    unique_conditions.append(and_(*col_conditions))
 
         if not unique_conditions:
             return None
@@ -223,7 +230,7 @@ class BaseRepository(Generic[T]):
         await self.db.flush()
         return instances
 
-    async def update(self, instance_id: uuid.UUID, updated_fields: dict[str, Any]) -> Optional[T]:
+    async def update(self, instance_id: uuid.UUID, updated_fields: dict[str, Any]) -> T | None:
         """Update an instance in the database.
 
         Args:
@@ -256,7 +263,6 @@ class BaseRepository(Generic[T]):
                 # if hasattr(instance, 'deleted_at'):
                 from datetime import UTC, datetime
 
-                # setattr(instance, 'deleted_at', datetime.now(UTC))  # noqa: B010
                 instance.deleted_at = datetime.now(UTC)
             else:
                 await self.db.delete(instance)
@@ -268,7 +274,7 @@ class BaseRepository(Generic[T]):
         self,
         query: Select,
         filter_str: str | None = None,
-        filter_cols: Optional[list[str]] = None,
+        filter_cols: list[str] | None = None,
     ) -> Select:
         """Add search filters to the query based on specified columns.
 
@@ -335,9 +341,9 @@ class BaseRepository(Generic[T]):
 
     async def count(
         self,
-        filter_str: Optional[str] = None,
-        filter_cols: Optional[list[str]] = None,
-        filters: Optional[dict[str, Any]] = None,
+        filter_str: str | None = None,
+        filter_cols: list[str] | None = None,
+        filters: dict[str, Any] | None = None,
         include_deleted: bool = False,
     ) -> int:
         """Count the total number of instances of the model.

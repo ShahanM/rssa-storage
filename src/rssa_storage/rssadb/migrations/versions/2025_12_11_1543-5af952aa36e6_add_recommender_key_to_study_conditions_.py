@@ -8,20 +8,17 @@ Revises: dc77bda9b96e
 Create Date: 2025-12-11 15:43:29.390420
 
 """
-from typing import Sequence, Union
-from datetime import datetime, timezone
-from sqlalchemy.dialects.postgresql import UUID
-import uuid
 
-from alembic import op
+from collections.abc import Sequence
+
 import sqlalchemy as sa
-
+from alembic import op
 
 # revision identifiers, used by Alembic.
 revision: str = '5af952aa36e6'
-down_revision: Union[str, None] = 'dc77bda9b96e'
-branch_labels: Union[str, Sequence[str], None] = None
-depends_on: Union[str, Sequence[str], None] = None
+down_revision: str | None = 'dc77bda9b96e'
+branch_labels: str | Sequence[str] | None = None
+depends_on: str | Sequence[str] | None = None
 
 
 def upgrade() -> None:

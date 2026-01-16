@@ -26,7 +26,9 @@ class StudyParticipantType(RssaBase):
 
     type: Mapped[str] = mapped_column()
 
-    study_participants: Mapped[list['StudyParticipant']] = relationship('StudyParticipant', back_populates='study_participant_type',)
+    study_participants: Mapped[list['StudyParticipant']] = relationship(
+        'StudyParticipant', back_populates='study_participant_type'
+    )
 
 
 class StudyParticipant(RssaBase, DateAuditMixin):
@@ -58,7 +60,9 @@ class StudyParticipant(RssaBase, DateAuditMixin):
     current_step_id: Mapped[uuid.UUID] = mapped_column(sa.ForeignKey('study_steps.id'), nullable=False)
     current_page_id: Mapped[uuid.UUID | None] = mapped_column(sa.ForeignKey('study_step_pages.id'), nullable=True)
 
-    study_participant_type: Mapped['StudyParticipantType'] = relationship('StudyParticipantType', back_populates='study_participants')
+    study_participant_type: Mapped['StudyParticipantType'] = relationship(
+        'StudyParticipantType', back_populates='study_participants'
+    )
     participant_study_session: Mapped['ParticipantStudySession'] = relationship(
         'ParticipantStudySession', back_populates='study_participant', cascade='all, delete-orphan'
     )

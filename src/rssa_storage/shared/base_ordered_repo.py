@@ -3,9 +3,9 @@
 import uuid
 from collections.abc import Sequence
 from dataclasses import dataclass
-from typing import Any, Optional, TypeVar, Union
+from typing import Any, TypeVar
 
-from sqlalchemy import Select, select, update
+from sqlalchemy import Select, update
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from .base_repo import BaseRepository, RepoQueryOptions
@@ -21,7 +21,7 @@ ModelType = TypeVar('ModelType', bound=SharedOrderedModel)
 class OrderedRepoQueryOptions(RepoQueryOptions):
     """Query options for ordered repositories."""
 
-    min_order_position: Optional[int] = None
+    min_order_position: int | None = None
 
 
 class BaseOrderedRepository(BaseRepository[ModelType]):
@@ -32,8 +32,8 @@ class BaseOrderedRepository(BaseRepository[ModelType]):
     def __init__(
         self,
         db: AsyncSession,
-        model: Optional[type[ModelType]] = None,
-        parent_id_column_name: Optional[str] = None,
+        model: type[ModelType] | None = None,
+        parent_id_column_name: str | None = None,
     ):
         """Initialize the BaseOrderedRepository.
 
@@ -77,7 +77,7 @@ class BaseOrderedRepository(BaseRepository[ModelType]):
 
         return query
 
-    async def find_many(self, options: Optional[RepoQueryOptions] = None) -> Sequence[ModelType]:
+    async def find_many(self, options: RepoQueryOptions | None = None) -> Sequence[ModelType]:
         """Find many ordered instances based on query options.
 
         Args:
@@ -89,22 +89,6 @@ class BaseOrderedRepository(BaseRepository[ModelType]):
         if options is None:
             options = OrderedRepoQueryOptions()
 
-        # Ensure we are using OrderedRepoQueryOptions if passed generic RepoQueryOptions but need ordered features?
-        # Or just rely on the caller passing the right type.
-        # For find_many in OrderedRepo, we probably want default sorting.
-
-        if options.filters and self.parent_id_column_name in options.filters:
-            # This logic was in the previous version, let's keep it but it might be redundant if filters handle it.
-            # Actually, the previous code popped it. Let's see.
-            # It popped it to use `self.parent_id_column == parent_id`.
-            # If we leave it in filters, `BaseRepository._filter` uses `getattr(self.model, col_name)`.
-            # `self.parent_id_column_name` is the column name string.
-            # So `BaseRepository._filter` should handle it correctly if the model has that attribute.
-            # The previous code might have been doing it to ensure `self.parent_id_column` (the attribute) is used?
-            # But `getattr(self.model, self.parent_id_column_name)` is exactly what `_filter` does.
-            # So we might not need to pop it.
-            pass
-
         options.sort_by = options.sort_by or 'order_position'
         options.sort_desc = options.sort_desc
 
@@ -113,7 +97,7 @@ class BaseOrderedRepository(BaseRepository[ModelType]):
     async def get_all_ordered_instances(
         self,
         parent_id: uuid.UUID,
-        limit: Optional[int] = None,
+        limit: int | None = None,
         include_deleted: bool = False,
     ) -> Sequence[ModelType]:
         """Get all ordered instances for a given parent ID.
@@ -138,8 +122,8 @@ class BaseOrderedRepository(BaseRepository[ModelType]):
     async def get_first_ordered_instance(
         self,
         parent_id: uuid.UUID,
-        load_options: Optional[Sequence[Any]] = None,
-    ) -> Optional[ModelType]:
+        load_options: Sequence[Any] | None = None,
+    ) -> ModelType | None:
         """Get the first ordered instance for a given parent ID.
 
         Args:
@@ -158,7 +142,7 @@ class BaseOrderedRepository(BaseRepository[ModelType]):
         )
         return await self.find_one(options)
 
-    async def get_next_ordered_instance(self, current_instance: ModelType) -> Optional[ModelType]:
+    async def get_next_ordered_instance(self, current_instance: ModelType) -> ModelType | None:
         """Get the next ordered instance after the current instance.
 
         Args:
@@ -178,7 +162,7 @@ class BaseOrderedRepository(BaseRepository[ModelType]):
         )
         return await self.find_one(options)
 
-    async def get_last_ordered_instance(self, parent_id: uuid.UUID) -> Union[ModelType, None]:
+    async def get_last_ordered_instance(self, parent_id: uuid.UUID) -> ModelType | None:
         """Get the last ordered instance for a given parent ID.
 
         Args:

@@ -6,15 +6,15 @@ Create Date: 2025-07-09 02:16:45.414653
 
 """
 
-from typing import Sequence, Union
+from collections.abc import Sequence
 
 from alembic import op
 
 # revision identifiers, used by Alembic.
 revision: str = '67dec0365681'
-down_revision: Union[str, None] = '2256a12c8836'
-branch_labels: Union[str, Sequence[str], None] = None
-depends_on: Union[str, Sequence[str], None] = None
+down_revision: str | None = '2256a12c8836'
+branch_labels: str | Sequence[str] | None = None
+depends_on: str | Sequence[str] | None = None
 
 INDEX_AND_CONSTRAINT_NAME = 'study_step_study_id_order_position_key'
 TABLE_NAME = 'study_step'

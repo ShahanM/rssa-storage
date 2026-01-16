@@ -5,20 +5,16 @@ Revises: 5af952aa36e6
 Create Date: 2025-12-12 09:08:51.095731
 
 """
-from typing import Sequence, Union
-from datetime import datetime, timezone
-from sqlalchemy.dialects.postgresql import UUID
-import uuid
+
+from collections.abc import Sequence
 
 from alembic import op
-import sqlalchemy as sa
-
 
 # revision identifiers, used by Alembic.
 revision: str = '08a92578f639'
-down_revision: Union[str, None] = '5af952aa36e6'
-branch_labels: Union[str, Sequence[str], None] = None
-depends_on: Union[str, Sequence[str], None] = None
+down_revision: str | None = '5af952aa36e6'
+branch_labels: str | Sequence[str] | None = None
+depends_on: str | Sequence[str] | None = None
 
 
 def upgrade() -> None:
@@ -27,5 +23,13 @@ def upgrade() -> None:
 
 
 def downgrade() -> None:
-    op.create_unique_constraint('uq_participant_survey_responses', 'participant_survey_responses', ['study_participant_id', 'study_step_page_id', 'study_step_id', 'study_id'])
-    op.create_unique_constraint('uq_participant_ratings', 'participant_ratings', ['study_participant_id', 'study_step_page_id', 'study_step_id', 'study_id'])
+    op.create_unique_constraint(
+        'uq_participant_survey_responses',
+        'participant_survey_responses',
+        ['study_participant_id', 'study_step_page_id', 'study_step_id', 'study_id'],
+    )
+    op.create_unique_constraint(
+        'uq_participant_ratings',
+        'participant_ratings',
+        ['study_participant_id', 'study_step_page_id', 'study_step_id', 'study_id'],
+    )

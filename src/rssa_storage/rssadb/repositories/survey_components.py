@@ -24,7 +24,8 @@ class SurveyItemRepository(BaseOrderedRepository[SurveyItem]):
     """Repository for SurveyItem model.
 
     Attributes:
-        parent_id_column_name: Configurs the BaseOrderedRepository to use 'survey_construct_id' as the parent ID colmn.
+        parent_id_column_name: Configures the BaseOrderedRepository to use 'survey_construct_id'
+            as the parent ID column.
     """
 
     parent_id_column_name: str = 'survey_construct_id'
@@ -34,7 +35,7 @@ class SurveyScaleLevelRepository(BaseOrderedRepository[SurveyScaleLevel]):
     """Repository for SurveyScaleLevel model.
 
     Attributes:
-        parent_id_column_name: Configurs the BaseOrderedRepository to use 'survey_scale_id' as the parent ID colmn.
+        parent_id_column_name: Configures the BaseOrderedRepository to use 'survey_scale_id' as the parent ID column.
     """
 
     parent_id_column_name: str = 'survey_scale_id'

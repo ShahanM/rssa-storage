@@ -17,7 +17,7 @@ Create Date: 2025-11-13 16:37:38.144644
 
 """
 
-from typing import Sequence, Union
+from collections.abc import Sequence
 
 import sqlalchemy as sa
 from alembic import op
@@ -26,9 +26,9 @@ from sqlalchemy.sql import text
 
 # revision identifiers, used by Alembic.
 revision: str = 'dc77bda9b96e'
-down_revision: Union[str, None] = '173182845d5d'
-branch_labels: Union[str, Sequence[str], None] = None
-depends_on: Union[str, Sequence[str], None] = None
+down_revision: str | None = '173182845d5d'
+branch_labels: str | Sequence[str] | None = None
+depends_on: str | Sequence[str] | None = None
 
 # All foreign key constraints to be renamed
 # We will drop these constraints first, then re-create them with standardized names.
@@ -269,7 +269,7 @@ TABLE_RENAME_MAP: dict[str, str] = {
     'participant_movie_sessions': 'study_participant_movie_sessions',
 }
 
-FK_NAMING_MAP: dict[str, list[tuple[str, str, str, Union[str, None]]]] = {
+FK_NAMING_MAP: dict[str, list[tuple[str, str, str, str | None]]] = {
     # table_name: [...(referent_table, local_col, remote_col, ondelete (optional); default CASCADE)]
     # Note: all foreign keys will be created with ondelete='CASCADE' except for those that relates to participants.
     # All participant related FKs will not specify ondelete behavior to avoid accidental deletions.
