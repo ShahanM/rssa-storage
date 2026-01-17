@@ -25,6 +25,8 @@ class RepoQueryOptions:
 
     ids: list[uuid.UUID] | None = None
     filters: dict[str, Any] = field(default_factory=dict)
+    filter_ranges: list[tuple[str, str, Any]] = field(default_factory=list)
+    filter_ilike: dict[str, str] = field(default_factory=dict)
     search_text: str | None = None
     search_columns: list[str] = field(default_factory=list)
     sort_by: str | None = None
@@ -95,6 +97,12 @@ class BaseRepository(Generic[T]):
         if options.filters:
             query = self._filter(query, options.filters)
 
+        if options.filter_ranges:
+            query = self._apply_range_filters(query, options.filter_ranges)
+
+        if options.filter_ilike:
+            query = self._apply_ilike_filters(query, options.filter_ilike)
+
         if options.search_text and options.search_columns:
             query = self._filter_similar(query, options.search_text, options.search_columns)
 
@@ -113,6 +121,40 @@ class BaseRepository(Generic[T]):
         if not options.include_deleted:
             query = self._apply_soft_delete(query)
 
+        return query
+
+    def _apply_range_filters(self, query: Select, ranges: list[tuple[str, str, Any]]) -> Select:
+        """Apply range filters (>=, <=) to the query.
+
+        Args:
+            query: The SQLAlchemy Select query.
+            ranges: List of tuples (column_name, operator, value).
+                    Operator can be '>=', '<=', '>', '<'.
+        """
+        for col_name, op, value in ranges:
+            col_attr = getattr(self.model, col_name, None)
+            if col_attr is not None:
+                if op == '>=':
+                    query = query.where(col_attr >= value)
+                elif op == '<=':
+                    query = query.where(col_attr <= value)
+                elif op == '>':
+                    query = query.where(col_attr > value)
+                elif op == '<':
+                    query = query.where(col_attr < value)
+        return query
+
+    def _apply_ilike_filters(self, query: Select, filters: dict[str, str]) -> Select:
+        """Apply ILIKE filters to specific columns.
+
+        Args:
+            query: The SQLAlchemy Select query.
+            filters: Dictionary of {column_name: search_string}.
+        """
+        for col_name, value in filters.items():
+            col_attr = getattr(self.model, col_name, None)
+            if col_attr is not None:
+                query = query.where(col_attr.ilike(f'%{value}%'))
         return query
 
     def _apply_soft_delete(self, query: Select) -> Select:
@@ -345,6 +387,8 @@ class BaseRepository(Generic[T]):
         filter_cols: list[str] | None = None,
         filters: dict[str, Any] | None = None,
         include_deleted: bool = False,
+        filter_ranges: list[tuple[str, str, Any]] | None = None,
+        filter_ilike: dict[str, str] | None = None,
     ) -> int:
         """Count the total number of instances of the model.
 
@@ -356,6 +400,12 @@ class BaseRepository(Generic[T]):
             query = self._apply_soft_delete(query)
         query = self._filter_similar(query, filter_str, filter_cols)
         query = self._filter(query, filters or {})
+        
+        if filter_ranges:
+            query = self._apply_range_filters(query, filter_ranges)
+            
+        if filter_ilike:
+            query = self._apply_ilike_filters(query, filter_ilike)
 
         result = await self.db.execute(query)
         return result.scalar_one()
