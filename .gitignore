@@ -4,3 +4,9 @@ __pycache__/*
 *.pyc
 */.logs/*
 */.cache
+src/rssa_storage/moviedb/.env
+src/rssa_storage/rssadb/.env
+src/rssa_storage/.*
+src/rssa_storage/*/.*
+src/rssa_storage/*/*.bak
+src/rssa_storage/*/*.back

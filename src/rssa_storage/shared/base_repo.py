@@ -400,10 +400,10 @@ class BaseRepository(Generic[T]):
             query = self._apply_soft_delete(query)
         query = self._filter_similar(query, filter_str, filter_cols)
         query = self._filter(query, filters or {})
-        
+
         if filter_ranges:
             query = self._apply_range_filters(query, filter_ranges)
-            
+
         if filter_ilike:
             query = self._apply_ilike_filters(query, filter_ilike)
 
