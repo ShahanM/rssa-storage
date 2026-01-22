@@ -176,6 +176,7 @@ class BaseOrderedRepository(BaseRepository[ModelType]):
             sort_by='order_position',
             sort_desc=True,
             limit=1,
+            include_deleted=True,
         )
         return await self.find_one(options)
 

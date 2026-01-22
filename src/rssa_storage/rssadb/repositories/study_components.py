@@ -108,6 +108,8 @@ class StudyConditionRepository(BaseRepository[StudyCondition]):
             .order_by(StudyCondition.name)
         )
 
+        condition_counts_query = self._apply_soft_delete(condition_counts_query)
+
         condition_counts_result = await self.db.execute(condition_counts_query)
         condition_counts_rows = condition_counts_result.all()
 

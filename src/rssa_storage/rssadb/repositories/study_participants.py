@@ -13,7 +13,7 @@ from rssa_storage.rssadb.models.study_participants import (
     StudyParticipant,
     StudyParticipantType,
 )
-from rssa_storage.shared import BaseRepository
+from rssa_storage.shared import BaseRepository, RepoQueryOptions
 from rssa_storage.shared.mixins import VersionedRepositoryMixin
 
 
@@ -59,13 +59,7 @@ class StudyParticipantMovieSessionRepository(BaseRepository[StudyParticipantMovi
         Returns:
             The ParticipantMovieSession instance or None if not found.
         """
-        query = select(StudyParticipantMovieSession).where(
-            StudyParticipantMovieSession.study_participant_id == participant_id
-        )
-
-        db_row = await self.db.execute(query)
-
-        return db_row.scalar_one_or_none()
+        return await self.find_one(RepoQueryOptions(filters={'study_participant_id': participant_id}))
 
 
 class ParticipantDemographicRepository(BaseRepository[Demographic], VersionedRepositoryMixin):
