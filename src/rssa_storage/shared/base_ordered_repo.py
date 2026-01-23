@@ -5,7 +5,7 @@ from collections.abc import Sequence
 from dataclasses import dataclass
 from typing import Any, TypeVar
 
-from sqlalchemy import Select, update
+from sqlalchemy import Select, case, select, update
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from .base_repo import BaseRepository, RepoQueryOptions
@@ -244,12 +244,50 @@ class BaseOrderedRepository(BaseRepository[ModelType]):
         Returns:
             None
         """
-        for instance_id, new_position in instances_map.items():
-            stmt = (
-                update(self.model)
-                .where(self.model.id == instance_id, self.parent_id_column == parent_id)
-                .values(order_position=new_position)
-            )
-            await self.db.execute(stmt)
+        if not instances_map:
+            return
 
+        # 1. Ghost Eviction: Move soft-deleted items out of the target positions
+        target_positions = list(instances_map.values())
+
+        # Check if model has soft delete support
+        if hasattr(self.model, 'deleted_at'):
+            # Find ghosts in the way
+            ghost_query = select(self.model.id, self.model.order_position).where(
+                getattr(self.model, self.parent_id_column_name) == parent_id,
+                self.model.deleted_at.is_not(None),
+                self.model.order_position.in_(target_positions),
+            )
+            ghosts = await self.db.execute(ghost_query)
+            ghost_ids = [row.id for row in ghosts]
+
+            if ghost_ids:
+                # Evict them to a safe range (e.g., current + 1,000,000)
+                # We use a simple shift to avoid collisions among ghosts themselves
+                evict_stmt = (
+                    update(self.model)
+                    .where(self.model.id.in_(ghost_ids))
+                    .values(order_position=self.model.order_position + 1000000)
+                )
+                await self.db.execute(evict_stmt)
+
+        # 2. Atomic Update: Apply new positions using CASE
+        # This allows swapping (A->2, B->1) without intermediate unique constraint violations
+        # because constraints are checked at the end of the statement.
+
+        # specific_case_stmt = case(instances_map, value=self.model.id)
+        # However, case(dict, value=x) syntax might need verification.
+        # Standard SqlAlchemy: case((cond1, val1), (cond2, val2), ...)
+
+        whens = [(self.model.id == uid, pos) for uid, pos in instances_map.items()]
+
+        stmt = (
+            update(self.model)
+            .where(
+                getattr(self.model, self.parent_id_column_name) == parent_id, self.model.id.in_(instances_map.keys())
+            )
+            .values(order_position=case(*whens))
+        )
+
+        await self.db.execute(stmt)
         await self.db.flush()
