@@ -5,7 +5,7 @@ from collections.abc import Sequence
 from dataclasses import dataclass
 from typing import Any, TypeVar
 
-from sqlalchemy import Select, case, select, update
+from sqlalchemy import Select, case, func, select, update
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from .base_repo import BaseRepository, RepoQueryOptions
@@ -247,7 +247,7 @@ class BaseOrderedRepository(BaseRepository[ModelType]):
         if not instances_map:
             return
 
-        # 1. Ghost Eviction: Move soft-deleted items out of the target positions
+        # Ghost Eviction: Move soft-deleted items out of the target positions
         target_positions = list(instances_map.values())
 
         # Check if model has soft delete support
@@ -271,17 +271,13 @@ class BaseOrderedRepository(BaseRepository[ModelType]):
                 )
                 await self.db.execute(evict_stmt)
 
-        # 2. Atomic Update: Apply new positions using CASE
-        # This allows swapping (A->2, B->1) without intermediate unique constraint violations
-        # because constraints are checked at the end of the statement.
+        # Negative Intermediate Update: Move to negative target positions
+        # This avoids collisions with existing positive values and other items being swapped.
 
-        # specific_case_stmt = case(instances_map, value=self.model.id)
-        # However, case(dict, value=x) syntax might need verification.
-        # Standard SqlAlchemy: case((cond1, val1), (cond2, val2), ...)
+        # Step A: Update to negative values (e.g. 2 -> -2)
+        whens = [(self.model.id == uid, -1 * pos) for uid, pos in instances_map.items()]
 
-        whens = [(self.model.id == uid, pos) for uid, pos in instances_map.items()]
-
-        stmt = (
+        stmt_neg = (
             update(self.model)
             .where(
                 getattr(self.model, self.parent_id_column_name) == parent_id, self.model.id.in_(instances_map.keys())
@@ -289,5 +285,17 @@ class BaseOrderedRepository(BaseRepository[ModelType]):
             .values(order_position=case(*whens))
         )
 
-        await self.db.execute(stmt)
+        await self.db.execute(stmt_neg)
+
+        # Step B: Flip back to positive values
+        # We target the specific IDs to be safe, though parent_id filter would also work finding negatives.
+        stmt_pos = (
+            update(self.model)
+            .where(
+                getattr(self.model, self.parent_id_column_name) == parent_id, self.model.id.in_(instances_map.keys())
+            )
+            .values(order_position=func.abs(self.model.order_position))
+        )
+
+        await self.db.execute(stmt_pos)
         await self.db.flush()
