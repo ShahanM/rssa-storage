@@ -6,13 +6,10 @@ Create Date: 2026-01-28 00:17:21.502397
 
 """
 
-import uuid
 from collections.abc import Sequence
-from datetime import datetime, timezone
 
-from alembic import op
 import sqlalchemy as sa
-
+from alembic import op
 
 revision: str = '1ab4cc504a9d'
 down_revision: str | None = '22694afb84f5'
