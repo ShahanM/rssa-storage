@@ -45,6 +45,9 @@ class Study(RssaBase, DateAuditMixin, SoftDeleteMixin):
 
     created_by: Mapped['User'] = relationship('User', back_populates='studies_created', foreign_keys=[created_by_id])
     owner: Mapped['User'] = relationship('User', back_populates='studies_owned', foreign_keys=[owner_id])
+    authorizations: Mapped[list['StudyAuthorization']] = relationship(
+        'StudyAuthorization', back_populates='study', cascade='all, delete-orphan'
+    )
 
     study_steps: Mapped[list['StudyStep']] = relationship(
         'StudyStep',
@@ -266,6 +269,32 @@ class ApiKey(RssaBase, DateAuditMixin):
     user: Mapped['User'] = relationship('User', back_populates='api_keys')
 
 
+class StudyAuthorization(RssaBase, DateAuditMixin):
+    """SQLAlchemy model for the 'study_authorizations' table.
+
+    Attributes:
+        study_id: Foreign key to the associated study.
+        user_id: Foreign key to the authorized user.
+        role: The role/permission level granted (e.g., 'viewer', 'editor', 'admin').
+    """
+
+    __tablename__ = 'study_authorizations'
+
+    study_id: Mapped[uuid.UUID] = mapped_column(sa.ForeignKey('studies.id', ondelete='CASCADE'), nullable=False)
+    user_id: Mapped[uuid.UUID] = mapped_column(sa.ForeignKey('users.id', ondelete='CASCADE'), nullable=False)
+
+    role: Mapped[str] = mapped_column(nullable=False)
+
+    study: Mapped['Study'] = relationship('Study', back_populates='authorizations')
+    user: Mapped['User'] = relationship('User', back_populates='study_authorizations')
+
+    # Ensure a user is only authorized once for a given study
+    __table_args__ = (
+        sa.UniqueConstraint('study_id', 'user_id'),
+        sa.Index(None, 'user_id'),
+    )
+
+
 class User(RssaBase, DateAuditMixin):
     """SQLAlchemy model for the 'users' table.
 
@@ -290,3 +319,6 @@ class User(RssaBase, DateAuditMixin):
     )
 
     api_keys: Mapped[list['ApiKey']] = relationship('ApiKey', back_populates='user')
+    study_authorizations: Mapped[list['StudyAuthorization']] = relationship(
+        'StudyAuthorization', back_populates='user', cascade='all, delete-orphan'
+    )
