@@ -7,6 +7,7 @@ from sqlalchemy.orm import selectinload
 from rssa_storage.rssadb.models.participant_responses import Feedback
 from rssa_storage.rssadb.models.study_components import (
     Study,
+    StudyAuthorization,
     StudyCondition,
     StudyStep,
     StudyStepPage,
@@ -14,7 +15,7 @@ from rssa_storage.rssadb.models.study_components import (
 )
 from rssa_storage.rssadb.models.study_participants import StudyParticipant
 from rssa_storage.rssadb.models.survey_constructs import SurveyConstruct, SurveyScale
-from rssa_storage.shared import BaseOrderedRepository, BaseRepository, OrderedRepoQueryOptions
+from rssa_storage.shared import BaseOrderedRepository, BaseRepository, OrderedRepoQueryOptions, RepoQueryOptions
 
 
 class StudyRepository(BaseRepository[Study]):
@@ -22,6 +23,45 @@ class StudyRepository(BaseRepository[Study]):
 
     SEARCHABLE_COLUMNS = ['name', 'description']
     LOAD_FULL_DETAILS = (selectinload(Study.study_steps), selectinload(Study.study_conditions))
+
+    async def _get_authorized_study_ids(self, user_id: uuid.UUID) -> list[uuid.UUID]:
+        """Helper to fetch study IDs authorized for a user."""
+        query = select(StudyAuthorization.study_id).where(StudyAuthorization.user_id == user_id)
+        result = await self.db.execute(query)
+        return list(result.scalars().all())
+
+    async def get_authorized_for_user(self, user_id: uuid.UUID, options: RepoQueryOptions = None) -> Sequence[Study]:
+        """Get studies authorized for a specific user."""
+        study_ids = await self._get_authorized_study_ids(user_id)
+
+        if not study_ids:
+            return []
+
+        options = options or RepoQueryOptions()
+        # Merge existing ID filters if any
+        if options.ids:
+            options.ids = list(set(options.ids) & set(study_ids))
+            if not options.ids:
+                return []
+        else:
+            options.ids = study_ids
+
+        return await self.find_many(options)
+
+    async def count_authorized_for_user(self, user_id: uuid.UUID, search: str | None = None) -> int:
+        """Count studies authorized for a specific user."""
+        study_ids = await self._get_authorized_study_ids(user_id)
+
+        if not study_ids:
+            return 0
+
+        return await self.count(filter_str=search, filter_cols=self.SEARCHABLE_COLUMNS, filters={'id': study_ids})
+
+
+class StudyAuthorizationRepository(BaseRepository[StudyAuthorization]):
+    """Repository for StudyAuthorization model."""
+
+    pass
 
 
 class StudyStepRepository(BaseOrderedRepository[StudyStep]):

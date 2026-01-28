@@ -309,6 +309,10 @@ class User(RssaBase, DateAuditMixin):
     __tablename__ = 'users'
 
     auth0_sub: Mapped[str] = mapped_column(unique=True, index=True)
+
+    email: Mapped[str | None] = mapped_column(nullable=True)
+    desc: Mapped[str | None] = mapped_column(nullable=True)
+    picture: Mapped[str | None] = mapped_column(nullable=True)
     studies_owned: Mapped[list['Study']] = relationship(
         'Study',
         back_populates='owner',
