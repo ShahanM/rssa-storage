@@ -12,11 +12,7 @@ from sqlalchemy.sql.base import ExecutableOption
 
 from rssa_storage.shared.db_utils import SharedModel
 
-# from rssa_api.data.models.rssa_base_models import DBBaseModel
-# from rssa_storage.rssadb.models.rssa_base_models import DBBaseModel
-
 T = TypeVar('T', bound=SharedModel)
-# T = TypeVar('T')
 
 
 @dataclass
@@ -27,6 +23,7 @@ class RepoQueryOptions:
     filters: dict[str, Any] = field(default_factory=dict)
     filter_ranges: list[tuple[str, str, Any]] = field(default_factory=list)
     filter_ilike: dict[str, str] = field(default_factory=dict)
+    filter_not_null: list[str] = field(default_factory=list)
     search_text: str | None = None
     search_columns: list[str] = field(default_factory=list)
     sort_by: str | None = None
@@ -91,20 +88,7 @@ class BaseRepository(Generic[T]):
 
     def _apply_query_options(self, query: Select, options: RepoQueryOptions) -> Select:
         """Centralized method to apply common query options to a SQLAlchemy Select query."""
-        if options.ids:
-            query = query.where(self.model.id.in_(options.ids))
-
-        if options.filters:
-            query = self._filter(query, options.filters)
-
-        if options.filter_ranges:
-            query = self._apply_range_filters(query, options.filter_ranges)
-
-        if options.filter_ilike:
-            query = self._apply_ilike_filters(query, options.filter_ilike)
-
-        if options.search_text and options.search_columns:
-            query = self._filter_similar(query, options.search_text, options.search_columns)
+        query = self._apply_filtering_to_query(query, options)
 
         if options.sort_by:
             query = self._sort(query, options.sort_by, options.sort_desc)
@@ -120,6 +104,28 @@ class BaseRepository(Generic[T]):
 
         if not options.include_deleted:
             query = self._apply_soft_delete(query)
+
+        return query
+
+    def _apply_filtering_to_query(self, query: Select, options: RepoQueryOptions) -> Select:
+        """Apply filtering options (filters, ranges, search, etc.) to the query."""
+        if options.ids:
+            query = query.where(self.model.id.in_(options.ids))
+
+        if options.filters:
+            query = self._filter(query, options.filters)
+
+        if options.filter_ranges:
+            query = self._apply_range_filters(query, options.filter_ranges)
+
+        if options.filter_ilike:
+            query = self._apply_ilike_filters(query, options.filter_ilike)
+
+        if options.filter_not_null:
+            query = self._apply_not_null_filters(query, options.filter_not_null)
+
+        if options.search_text and options.search_columns:
+            query = self._filter_similar(query, options.search_text, options.search_columns)
 
         return query
 
@@ -144,6 +150,28 @@ class BaseRepository(Generic[T]):
                     query = query.where(col_attr < value)
         return query
 
+    def _apply_not_null_filters(self, query: Select, columns: list[str]) -> Select:
+        """Apply IS NOT NULL filters to specific columns or relationships.
+
+        Args:
+            query: The SQLAlchemy Select query.
+            columns: List of column/relationship names to check for existence (NOT NULL).
+        """
+        mapper = inspect(self.model)
+
+        for col_name in columns:
+            col_attr = getattr(self.model, col_name, None)
+            if col_attr is not None:
+                if col_name in mapper.relationships:
+                    relationship = mapper.relationships[col_name]
+                    if relationship.uselist:
+                        query = query.where(col_attr.any())
+                    else:
+                        query = query.where(col_attr.has())
+                else:
+                    query = query.where(col_attr.is_not(None))
+        return query
+
     def _apply_ilike_filters(self, query: Select, filters: dict[str, str]) -> Select:
         """Apply ILIKE filters to specific columns.
 
@@ -166,11 +194,9 @@ class BaseRepository(Generic[T]):
         Returns:
             The modified Select query excluding soft-deleted records.
         """
-        # if hasattr(self.model, 'deleted_at'):
         deleted_attr = getattr(self.model, 'deleted_at', None)
         if deleted_attr is not None:
             query = query.where(deleted_attr.is_(None))
-            # query = query.where(self.model.deleted_at.is_(None))
         return query
 
     async def find_many(self, options: RepoQueryOptions | None = None) -> Sequence[T]:
@@ -389,6 +415,7 @@ class BaseRepository(Generic[T]):
         include_deleted: bool = False,
         filter_ranges: list[tuple[str, str, Any]] | None = None,
         filter_ilike: dict[str, str] | None = None,
+        filter_not_null: list[str] | None = None,
     ) -> int:
         """Count the total number of instances of the model.
 
@@ -406,6 +433,9 @@ class BaseRepository(Generic[T]):
 
         if filter_ilike:
             query = self._apply_ilike_filters(query, filter_ilike)
+
+        if filter_not_null:
+            query = self._apply_not_null_filters(query, filter_not_null)
 
         result = await self.db.execute(query)
         return result.scalar_one()
