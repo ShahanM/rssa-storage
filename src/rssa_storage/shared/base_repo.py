@@ -1,8 +1,9 @@
 """Base repository providing generic CRUD operations for SQLAlchemy models."""
 
+import copy
 import uuid
 from collections.abc import Sequence
-from dataclasses import dataclass, field
+from dataclasses import asdict, dataclass, field
 from typing import Any, Generic, Protocol, TypeGuard, TypeVar, get_args
 
 from sqlalchemy import Select, UniqueConstraint, and_, func, inspect, or_, select
@@ -32,6 +33,17 @@ class RepoQueryOptions:
     offset: int | None = None
     include_deleted: bool = False
     load_options: Sequence[ExecutableOption] | None = field(default_factory=list)
+
+
+def merge_repo_query_options(options1: RepoQueryOptions, options2: RepoQueryOptions) -> RepoQueryOptions:
+    """Merge two RepoQueryOptions objects."""
+
+    dict1 = asdict(options1)
+    dict2 = asdict(options2)
+
+    merged_dict = {**dict1, **dict2}
+
+    return RepoQueryOptions(**copy.deepcopy(merged_dict))
 
 
 class SoftDeletable(Protocol):
