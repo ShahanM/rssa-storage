@@ -1,9 +1,8 @@
 """Base repository providing generic CRUD operations for SQLAlchemy models."""
 
-import copy
 import uuid
 from collections.abc import Sequence
-from dataclasses import asdict, dataclass, field
+from dataclasses import dataclass, field
 from typing import Any, Generic, Protocol, TypeGuard, TypeVar, get_args
 
 from sqlalchemy import Select, UniqueConstraint, and_, func, inspect, or_, select
@@ -36,14 +35,50 @@ class RepoQueryOptions:
 
 
 def merge_repo_query_options(options1: RepoQueryOptions, options2: RepoQueryOptions) -> RepoQueryOptions:
-    """Merge two RepoQueryOptions objects."""
+    """Merge two RepoQueryOptions objects.
 
-    dict1 = asdict(options1)
-    dict2 = asdict(options2)
+    Merge strategy:
+    - Lists/Sequences: Concatenated (ids, filter_ranges, filter_not_null, search_columns, load_options)
+    - Dictionaries: Merged, with options2 overriding options1 (filters, filter_ilike)
+    - Scalars: options2 overrides options1 if explicit value provided (not None/default), else options1
+    """
+    merged = RepoQueryOptions()
 
-    merged_dict = {**dict1, **dict2}
+    # Merge IDs: Concatenate if any are present.
+    if options1.ids is not None or options2.ids is not None:
+        merged.ids = (options1.ids or []) + (options2.ids or [])
 
-    return RepoQueryOptions(**copy.deepcopy(merged_dict))
+    # Merge dictionaries
+    merged.filters = {**options1.filters, **options2.filters}
+    merged.filter_ilike = {**options1.filter_ilike, **options2.filter_ilike}
+
+    # Merge lists (concatenation)
+    merged.filter_ranges = options1.filter_ranges + options2.filter_ranges
+    merged.filter_not_null = list(set(options1.filter_not_null + options2.filter_not_null))
+    merged.search_columns = list(set(options1.search_columns + options2.search_columns))
+
+    # For load_options, we want to combine them
+    opt1_load = list(options1.load_options) if options1.load_options else []
+    opt2_load = list(options2.load_options) if options2.load_options else []
+    merged.load_options = tuple(opt1_load + opt2_load)
+
+    # Scalars - options2 takes precedence if set (not None)
+    merged.search_text = options2.search_text if options2.search_text is not None else options1.search_text
+    merged.limit = options2.limit if options2.limit is not None else options1.limit
+    merged.offset = options2.offset if options2.offset is not None else options1.offset
+
+    # Sort behavior: if options2 specifies sort_by, it dictates the sort.
+    if options2.sort_by:
+        merged.sort_by = options2.sort_by
+        merged.sort_desc = options2.sort_desc
+    else:
+        merged.sort_by = options1.sort_by
+        merged.sort_desc = options1.sort_desc
+
+    # If anyone wants deleted included, it should be included.
+    merged.include_deleted = options1.include_deleted or options2.include_deleted
+
+    return merged
 
 
 class SoftDeletable(Protocol):
