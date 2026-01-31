@@ -12,6 +12,8 @@ from rssa_storage.shared import BaseRepository, RepoQueryOptions
 class UserRepository(BaseRepository[User]):
     """Repository for User model."""
 
+    SEARCHABLE_COLUMNS = ['email', 'auth0_sub', 'desc']
+
 
 class ApiKeyRepository(BaseRepository[ApiKey]):
     """Repository for ApiKey model."""
