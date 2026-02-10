@@ -8,9 +8,10 @@ from typing import Any, Generic, Protocol, TypeGuard, TypeVar, get_args
 from sqlalchemy import Select, UniqueConstraint, and_, func, inspect, or_, select
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy.orm import with_loader_criteria
 from sqlalchemy.sql.base import ExecutableOption
 
-from rssa_storage.shared.db_utils import SharedModel
+from rssa_storage.shared.db_utils import SharedModel, SoftDeleteMixin
 
 T = TypeVar('T', bound=SharedModel)
 
@@ -150,7 +151,16 @@ class BaseRepository(Generic[T]):
             query = query.options(*options.load_options)
 
         if not options.include_deleted:
-            query = self._apply_soft_delete(query)
+            query = self._apply_soft_delete_filter(query)
+
+            # Apply the deleted filter to all joined tables
+            query = query.options(
+                with_loader_criteria(
+                    SoftDeleteMixin,
+                    lambda cls: cls.deleted_at.is_(None),
+                    include_aliases=True,
+                )
+            )
 
         return query
 
@@ -232,7 +242,7 @@ class BaseRepository(Generic[T]):
                 query = query.where(col_attr.ilike(f'%{value}%'))
         return query
 
-    def _apply_soft_delete(self, query: Select) -> Select:
+    def _apply_soft_delete_filter(self, query: Select) -> Select:
         """Modify the query to exclude soft-deleted records.
 
         Args:
@@ -471,7 +481,7 @@ class BaseRepository(Generic[T]):
         """
         query = select(func.count()).select_from(self.model)
         if not include_deleted:
-            query = self._apply_soft_delete(query)
+            query = self._apply_soft_delete_filter(query)
         query = self._filter_similar(query, filter_str, filter_cols)
         query = self._filter(query, filters or {})
 

@@ -255,7 +255,7 @@ class BaseOrderedRepository(BaseRepository[ModelType]):
             # Find ghosts in the way
             ghost_query = select(self.model.id, self.model.order_position).where(
                 getattr(self.model, self.parent_id_column_name) == parent_id,
-                self.model.deleted_at.is_not(None),
+                self.model.deleted_at.is_not(None),  # type: ignore
                 self.model.order_position.in_(target_positions),
             )
             ghosts = await self.db.execute(ghost_query)
