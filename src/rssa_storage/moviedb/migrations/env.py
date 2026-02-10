@@ -10,24 +10,18 @@ from rssa_storage.moviedb.models import Base
 # access to the values within the .ini file in use.
 config = context.config
 
-# config.set_main_option('sqlalchemy.url', f'postgresql://{DB_URI}')
-
 # Interpret the config file for Python logging.
 # This line sets up loggers basically.
 if config.config_file_name is not None:
     fileConfig(config.config_file_name)
 
-# add your model's MetaData object here
-# for 'autogenerate' support
-# from myapp import mymodel
-# target_metadata = mymodel.Base.metadata
 target_metadata = Base.metadata
 
 # other values from the config, defined by the needs of env.py,
 # can be acquired:
 # my_important_option = config.get_main_option("my_important_option")
 # ... etc.
-db_url = create_db_url(False)
+db_url = create_db_url(False, True)
 config.set_main_option('sqlalchemy.url', db_url)
 
 
