@@ -30,7 +30,9 @@ class StudyRepository(BaseRepository[Study]):
         result = await self.db.execute(query)
         return list(result.scalars().all())
 
-    async def get_authorized_for_user(self, user_id: uuid.UUID, options: RepoQueryOptions = None) -> Sequence[Study]:
+    async def get_authorized_for_user(
+        self, user_id: uuid.UUID, options: RepoQueryOptions | None = None
+    ) -> Sequence[Study]:
         """Get studies authorized for a specific user."""
         study_ids = await self._get_authorized_study_ids(user_id)
 
@@ -148,7 +150,7 @@ class StudyConditionRepository(BaseRepository[StudyCondition]):
             .order_by(StudyCondition.name)
         )
 
-        condition_counts_query = self._apply_soft_delete(condition_counts_query)
+        condition_counts_query = self._apply_soft_delete_filter(condition_counts_query)
 
         condition_counts_result = await self.db.execute(condition_counts_query)
         condition_counts_rows = condition_counts_result.all()

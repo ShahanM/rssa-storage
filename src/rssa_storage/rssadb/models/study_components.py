@@ -95,6 +95,11 @@ class StudyCondition(RssaBase, DateAuditMixin, SoftDeleteMixin):
         nullable=True,
     )
 
+    authorized_test_code: Mapped[str] = mapped_column(
+        sa.String(16),
+        nullable=True,
+    )
+
     study_id: Mapped[uuid.UUID] = mapped_column(sa.ForeignKey('studies.id', ondelete='CASCADE'), nullable=False)
 
     study: Mapped['Study'] = relationship('Study', back_populates='study_conditions')

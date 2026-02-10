@@ -18,14 +18,29 @@ def create_db_components(echo: bool = False) -> tuple[AsyncEngine, async_session
     return engine, session_factory
 
 
-def create_db_url(is_async: bool = False) -> str:
-    dbuser = os.environ.get('DB_USER', '')
-    dbpass = os.environ.get('DB_PASSWORD', '')
-    dbhost = os.environ.get('DB_HOST', '')
-    dbport = os.environ.get('DB_PORT', '')
-    dbname = os.environ.get('DB_NAME', '')
+def create_db_url(is_async: bool = False, use_neon: bool = False) -> str:
+    if use_neon:
+        dbuser = os.environ.get('PGUSER', '')
+        dbpass = os.environ.get('PGPASSWORD', '')
+        dbhost = os.environ.get('PGHOST', '')
+        dbname = os.environ.get('PGDATABASE', '')
+        sslmode = os.environ.get('PGSSLMODE', '')
+        channel = os.environ.get('PGCHANNELBINDING', '')
 
-    if is_async:
-        return f'postgresql+asyncpg://{dbuser}:{dbpass}@{dbhost}:{dbport}/{dbname}'
+        param = f'sslmode={sslmode}&channel_binding={channel}'
+
+        if is_async:
+            return f'postgresql+asyncpg://{dbuser}:{dbpass}@{dbhost}/{dbname}?{param}'
+        else:
+            return f'postgresql+psycopg2://{dbuser}:{dbpass}@{dbhost}/{dbname}?{param}'
     else:
-        return f'postgresql+psycopg2://{dbuser}:{dbpass}@{dbhost}:{dbport}/{dbname}'
+        dbuser = os.environ.get('DB_USER', '')
+        dbpass = os.environ.get('DB_PASSWORD', '')
+        dbhost = os.environ.get('DB_HOST', '')
+        dbport = os.environ.get('DB_PORT', '')
+        dbname = os.environ.get('DB_NAME', '')
+
+        if is_async:
+            return f'postgresql+asyncpg://{dbuser}:{dbpass}@{dbhost}:{dbport}/{dbname}'
+        else:
+            return f'postgresql+psycopg2://{dbuser}:{dbpass}@{dbhost}:{dbport}/{dbname}'
