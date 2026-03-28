@@ -8,7 +8,7 @@ from typing import Any, Generic, Protocol, TypeGuard, TypeVar, get_args
 from sqlalchemy import Select, UniqueConstraint, and_, func, inspect, or_, select
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy.orm import with_loader_criteria
+from sqlalchemy.orm import InstrumentedAttribute, load_only, selectinload, with_loader_criteria
 from sqlalchemy.sql.base import ExecutableOption
 
 from rssa_storage.shared.db_utils import SharedModel, SoftDeleteMixin
@@ -33,53 +33,8 @@ class RepoQueryOptions:
     offset: int | None = None
     include_deleted: bool = False
     load_options: Sequence[ExecutableOption] | None = field(default_factory=list)
-
-
-def merge_repo_query_options(options1: RepoQueryOptions, options2: RepoQueryOptions) -> RepoQueryOptions:
-    """Merge two RepoQueryOptions objects.
-
-    Merge strategy:
-    - Lists/Sequences: Concatenated (ids, filter_ranges, filter_not_null, search_columns, load_options)
-    - Dictionaries: Merged, with options2 overriding options1 (filters, filter_ilike)
-    - Scalars: options2 overrides options1 if explicit value provided (not None/default), else options1
-    """
-    merged = RepoQueryOptions()
-
-    # Merge IDs: Concatenate if any are present.
-    if options1.ids is not None or options2.ids is not None:
-        merged.ids = (options1.ids or []) + (options2.ids or [])
-
-    # Merge dictionaries
-    merged.filters = {**options1.filters, **options2.filters}
-    merged.filter_ilike = {**options1.filter_ilike, **options2.filter_ilike}
-
-    # Merge lists (concatenation)
-    merged.filter_ranges = options1.filter_ranges + options2.filter_ranges
-    merged.filter_not_null = list(set(options1.filter_not_null + options2.filter_not_null))
-    merged.search_columns = list(set(options1.search_columns + options2.search_columns))
-
-    # For load_options, we want to combine them
-    opt1_load = list(options1.load_options) if options1.load_options else []
-    opt2_load = list(options2.load_options) if options2.load_options else []
-    merged.load_options = tuple(opt1_load + opt2_load)
-
-    # Scalars - options2 takes precedence if set (not None)
-    merged.search_text = options2.search_text if options2.search_text is not None else options1.search_text
-    merged.limit = options2.limit if options2.limit is not None else options1.limit
-    merged.offset = options2.offset if options2.offset is not None else options1.offset
-
-    # Sort behavior: if options2 specifies sort_by, it dictates the sort.
-    if options2.sort_by:
-        merged.sort_by = options2.sort_by
-        merged.sort_desc = options2.sort_desc
-    else:
-        merged.sort_by = options1.sort_by
-        merged.sort_desc = options1.sort_desc
-
-    # If anyone wants deleted included, it should be included.
-    merged.include_deleted = options1.include_deleted or options2.include_deleted
-
-    return merged
+    load_columns: list[str] | None = None
+    load_relationships: dict[str, Any] | None = field(default_factory=dict)
 
 
 class SoftDeletable(Protocol):
@@ -137,7 +92,16 @@ class BaseRepository(Generic[T]):
     def _apply_query_options(self, query: Select, options: RepoQueryOptions) -> Select:
         """Centralized method to apply common query options to a SQLAlchemy Select query."""
         query = self._apply_filtering_to_query(query, options)
+        query = self._apply_sorting_and_pagination(query, options)
+        query = self._apply_load_options(query, options)
 
+        if not options.include_deleted:
+            query = self._apply_soft_delete_criteria(query)
+
+        return query
+
+    def _apply_sorting_and_pagination(self, query: Select, options: RepoQueryOptions) -> Select:
+        """Apply sorting, limit, and offset mutations to the query."""
         if options.sort_by:
             query = self._sort(query, options.sort_by, options.sort_desc)
 
@@ -147,20 +111,64 @@ class BaseRepository(Generic[T]):
         if options.offset:
             query = query.offset(options.offset)
 
+        return query
+
+    def _build_column_loaders(self, load_columns: list[str]) -> list[ExecutableOption]:
+        """Build deferred loading options (load_only) for top-level columns."""
+        column_attrs = []
+        for col_name in load_columns:
+            attr = getattr(self.model, col_name, None)
+            if isinstance(attr, InstrumentedAttribute) and hasattr(attr.property, 'columns'):
+                column_attrs.append(attr)
+
+        return [load_only(*column_attrs)] if column_attrs else []
+
+    def _build_relationship_loaders(
+        self, model_class: type, rel_dict: dict[str, Any], current_path: Any = None
+    ) -> list[ExecutableOption]:
+        """Recursively build eager load strategies (selectinload) for relationships."""
+        loaders = []
+
+        for rel_name, rel_data in rel_dict.items():
+            rel_attr = getattr(model_class, rel_name, None)
+
+            if isinstance(rel_attr, InstrumentedAttribute) and hasattr(rel_attr.property, 'mapper'):
+                loader = selectinload(rel_attr) if current_path is None else current_path.selectinload(rel_attr)
+
+                rel_columns = rel_data.get('columns', [])
+                nested_rels = rel_data.get('relationships', {})
+                nested_model = rel_attr.property.mapper.class_
+
+                if rel_columns:
+                    nested_attrs = []
+                    for col_name in rel_columns:
+                        child_attr = getattr(nested_model, col_name, None)
+                        if isinstance(child_attr, InstrumentedAttribute) and hasattr(child_attr.property, 'columns'):
+                            nested_attrs.append(child_attr)
+                    if nested_attrs:
+                        loader = loader.load_only(*nested_attrs)
+
+                loaders.append(loader)
+
+                if nested_rels:
+                    loaders.extend(self._build_relationship_loaders(nested_model, nested_rels, loader))
+
+        return loaders
+
+    def _apply_load_options(self, query: Select, options: RepoQueryOptions) -> Select:
+        """Apply deferred column loading and relationship eager loading strategies."""
         if options.load_options:
             query = query.options(*options.load_options)
 
-        if not options.include_deleted:
-            query = self._apply_soft_delete_filter(query)
+        if options.load_columns:
+            col_loaders = self._build_column_loaders(options.load_columns)
+            if col_loaders:
+                query = query.options(*col_loaders)
 
-            # Apply the deleted filter to all joined tables
-            query = query.options(
-                with_loader_criteria(
-                    SoftDeleteMixin,
-                    lambda cls: cls.deleted_at.is_(None),
-                    include_aliases=True,
-                )
-            )
+        if options.load_relationships:
+            rel_loaders = self._build_relationship_loaders(self.model, options.load_relationships)
+            if rel_loaders:
+                query = query.options(*rel_loaders)
 
         return query
 
@@ -254,6 +262,19 @@ class BaseRepository(Generic[T]):
         deleted_attr = getattr(self.model, 'deleted_at', None)
         if deleted_attr is not None:
             query = query.where(deleted_attr.is_(None))
+        return query
+
+    def _apply_soft_delete_criteria(self, query: Select) -> Select:
+        """Apply soft delete filters to the main model and all loaded relationships."""
+        query = self._apply_soft_delete_filter(query)
+
+        query = query.options(
+            with_loader_criteria(
+                SoftDeleteMixin,
+                lambda cls: cls.deleted_at.is_(None),
+                include_aliases=True,
+            )
+        )
         return query
 
     async def find_many(self, options: RepoQueryOptions | None = None) -> Sequence[T]:
@@ -385,7 +406,6 @@ class BaseRepository(Generic[T]):
         instance = await self.find_one(RepoQueryOptions(ids=[instance_id]))
         if instance:
             if is_soft_deletable(instance):
-                # if hasattr(instance, 'deleted_at'):
                 from datetime import UTC, datetime
 
                 instance.deleted_at = datetime.now(UTC)
@@ -396,10 +416,7 @@ class BaseRepository(Generic[T]):
         return False
 
     def _filter_similar(
-        self,
-        query: Select,
-        filter_str: str | None = None,
-        filter_cols: list[str] | None = None,
+        self, query: Select, filter_str: str | None = None, filter_cols: list[str] | None = None
     ) -> Select:
         """Add search filters to the query based on specified columns.
 
@@ -421,11 +438,7 @@ class BaseRepository(Generic[T]):
 
         return query
 
-    def _filter(
-        self,
-        query: Select,
-        filters: dict[str, Any],
-    ) -> Select:
+    def _filter(self, query: Select, filters: dict[str, Any]) -> Select:
         """Add exact match filters to the query based on specified columns.
 
         Args:
@@ -464,35 +477,16 @@ class BaseRepository(Generic[T]):
                 query = query.order_by(col_to_sort.asc())
         return query
 
-    async def count(
-        self,
-        filter_str: str | None = None,
-        filter_cols: list[str] | None = None,
-        filters: dict[str, Any] | None = None,
-        include_deleted: bool = False,
-        filter_ranges: list[tuple[str, str, Any]] | None = None,
-        filter_ilike: dict[str, str] | None = None,
-        filter_not_null: list[str] | None = None,
-    ) -> int:
+    async def count(self, options: RepoQueryOptions) -> int:
         """Count the total number of instances of the model.
 
         Returns:
             The total number of instances.
         """
         query = select(func.count()).select_from(self.model)
-        if not include_deleted:
-            query = self._apply_soft_delete_filter(query)
-        query = self._filter_similar(query, filter_str, filter_cols)
-        query = self._filter(query, filters or {})
-
-        if filter_ranges:
-            query = self._apply_range_filters(query, filter_ranges)
-
-        if filter_ilike:
-            query = self._apply_ilike_filters(query, filter_ilike)
-
-        if filter_not_null:
-            query = self._apply_not_null_filters(query, filter_not_null)
+        if not options.include_deleted:
+            query = self._apply_soft_delete_criteria(query)
+        query = self._apply_filtering_to_query(query, options)
 
         result = await self.db.execute(query)
         return result.scalar_one()

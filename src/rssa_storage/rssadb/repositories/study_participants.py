@@ -2,7 +2,6 @@
 
 import uuid
 
-from sqlalchemy import select
 from sqlalchemy.orm import selectinload
 
 from rssa_storage.rssadb.models.participant_movie_sequence import StudyParticipantMovieSession

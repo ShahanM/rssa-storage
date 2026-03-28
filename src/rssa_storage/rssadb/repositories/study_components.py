@@ -56,8 +56,13 @@ class StudyRepository(BaseRepository[Study]):
 
         if not study_ids:
             return 0
-
-        return await self.count(filter_str=search, filter_cols=self.SEARCHABLE_COLUMNS, filters={'id': study_ids})
+        options = RepoQueryOptions(
+            filters={'id': study_ids},
+            search_text=search,
+            search_columns=self.SEARCHABLE_COLUMNS,
+        )
+        # return await self.count(filter_str=search, filter_cols=self.SEARCHABLE_COLUMNS, filters={'id': study_ids})
+        return await self.count(options)
 
 
 class StudyAuthorizationRepository(BaseRepository[StudyAuthorization]):
@@ -88,7 +93,7 @@ class StudyStepRepository(BaseOrderedRepository[StudyStep]):
         Returns:
             True if the path is unique within the study, False otherwise.
         """
-        query = select(StudyStep).where(and_(StudyStep.study_id == study_id, StudyStep.path == path))
+        query = select(StudyStep.id).where(and_(StudyStep.study_id == study_id, StudyStep.path == path))
         if exclude_step_id:
             query = query.where(StudyStep.id != exclude_step_id)
 

@@ -9,11 +9,8 @@ from sqlalchemy import Select, case, func, select, update
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from .base_repo import BaseRepository, RepoQueryOptions
-
-# from rssa_api.data.models.rssa_base_models import DBBaseOrderedModel
 from .db_utils import SharedOrderedModel
 
-# ModelType = TypeVar('ModelType', bound=DBBaseOrderedModel)
 ModelType = TypeVar('ModelType', bound=SharedOrderedModel)
 
 
@@ -78,14 +75,7 @@ class BaseOrderedRepository(BaseRepository[ModelType]):
         return query
 
     async def find_many(self, options: RepoQueryOptions | None = None) -> Sequence[ModelType]:
-        """Find many ordered instances based on query options.
-
-        Args:
-            options: Query options including filters, sorting, pagination, etc.
-
-        Returns:
-            A list of ordered instances.
-        """
+        """Find many ordered instances based on query options."""
         if options is None:
             options = OrderedRepoQueryOptions()
 
@@ -93,31 +83,6 @@ class BaseOrderedRepository(BaseRepository[ModelType]):
         options.sort_desc = options.sort_desc
 
         return await super().find_many(options)
-
-    async def get_all_ordered_instances(
-        self,
-        parent_id: uuid.UUID,
-        limit: int | None = None,
-        include_deleted: bool = False,
-    ) -> Sequence[ModelType]:
-        """Get all ordered instances for a given parent ID.
-
-        Args:
-            parent_id: The parent ID.
-            limit: Optional limit on the number of instances to retrieve.
-            include_deleted: Whether to include soft-deleted instances.
-
-        Returns:
-            A list of ordered instances.
-        """
-        options = OrderedRepoQueryOptions(
-            filters={self.parent_id_column_name: parent_id},
-            sort_by='order_position',
-            sort_desc=False,
-            limit=limit,
-            include_deleted=include_deleted,
-        )
-        return await self.find_many(options)
 
     async def get_first_ordered_instance(
         self,
@@ -189,7 +154,6 @@ class BaseOrderedRepository(BaseRepository[ModelType]):
         Returns:
             None
         """
-        # instance = await self.get(instance_id)
         instance = await self.find_one(RepoQueryOptions(filters={'id': instance_id}))
 
         if instance:
@@ -216,8 +180,7 @@ class BaseOrderedRepository(BaseRepository[ModelType]):
         Returns:
             None
         """
-        # instance = await self.get(instance_id)
-        instance = await self.find_one(RepoQueryOptions(filters={'id': instance_id}))
+        instance = await self.find_one(RepoQueryOptions(filters={'id': instance_id}, include_delted=True))
 
         if instance:
             deleted_position = instance.order_position
@@ -247,12 +210,9 @@ class BaseOrderedRepository(BaseRepository[ModelType]):
         if not instances_map:
             return
 
-        # Ghost Eviction: Move soft-deleted items out of the target positions
         target_positions = list(instances_map.values())
 
-        # Check if model has soft delete support
         if hasattr(self.model, 'deleted_at'):
-            # Find ghosts in the way
             ghost_query = select(self.model.id, self.model.order_position).where(
                 getattr(self.model, self.parent_id_column_name) == parent_id,
                 self.model.deleted_at.is_not(None),  # type: ignore
@@ -262,8 +222,6 @@ class BaseOrderedRepository(BaseRepository[ModelType]):
             ghost_ids = [row.id for row in ghosts]
 
             if ghost_ids:
-                # Evict them to a safe range (e.g., current + 1,000,000)
-                # We use a simple shift to avoid collisions among ghosts themselves
                 evict_stmt = (
                     update(self.model)
                     .where(self.model.id.in_(ghost_ids))
@@ -271,10 +229,6 @@ class BaseOrderedRepository(BaseRepository[ModelType]):
                 )
                 await self.db.execute(evict_stmt)
 
-        # Negative Intermediate Update: Move to negative target positions
-        # This avoids collisions with existing positive values and other items being swapped.
-
-        # Step A: Update to negative values (e.g. 2 -> -2)
         whens = [(self.model.id == uid, -1 * pos) for uid, pos in instances_map.items()]
 
         stmt_neg = (
@@ -287,8 +241,6 @@ class BaseOrderedRepository(BaseRepository[ModelType]):
 
         await self.db.execute(stmt_neg)
 
-        # Step B: Flip back to positive values
-        # We target the specific IDs to be safe, though parent_id filter would also work finding negatives.
         stmt_pos = (
             update(self.model)
             .where(
