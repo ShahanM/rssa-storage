@@ -4,8 +4,8 @@ from logging.config import fileConfig
 from alembic import context
 from sqlalchemy import engine_from_config, pool
 
-from rssa_storage.rssadb.db_base import create_db_url
 from rssa_storage.rssadb.models import Base
+from rssa_storage.shared.db_base import create_db_url
 
 config = context.config
 
@@ -14,7 +14,7 @@ if config.config_file_name is not None:
 
 target_metadata = Base.metadata
 
-db_url = create_db_url(False, True)
+db_url = create_db_url(env_prefix='RSSA_DB', is_async=False, use_neon=True)
 config.set_main_option('sqlalchemy.url', db_url)
 
 

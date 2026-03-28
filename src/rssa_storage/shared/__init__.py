@@ -1,4 +1,5 @@
-from .base_repo import BaseRepository, RepoQueryOptions, merge_repo_query_options
+from .base_repo import BaseRepository, RepoQueryOptions
+from .repo_utils import merge_repo_query_options
 from .base_ordered_repo import BaseOrderedRepository, OrderedRepoQueryOptions
 from .db_utils import SoftDeleteMixin, DateAuditMixin, EnabledMixin
 

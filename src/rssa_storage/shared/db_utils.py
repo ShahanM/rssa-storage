@@ -39,36 +39,12 @@ async def generic_get_db(session_factory) -> AsyncGenerator[AsyncSession, None]:
         await session.close()
 
 
-# def unique_constraint_name(constraint, table):
-#     column_names = '_'.join([col.name for col in constraint.columns])
-#     fullname = f'uq_{table.name}_{column_names}'
-
-#     if len(fullname) > 60:
-#         name_hash = hashlib.md5(fullname.encode('utf-8')).hexdigest()[:6]
-#         return f'{fullname[:53]}_{name_hash}'
-
-#     return fullname
-
-
-# NAMING_CONVENTION = {
-#     'ix': 'ix_%(table_name)s_%(column_0_name)s',
-#     # 'uq': 'uq_%(table_name)s_%(column_0_name)s',
-#     'uq': unique_constraint_name,
-#     'ck': 'ck_%(table_name)s_%(constraint_name)s',
-#     'fk': 'fk_%(table_name)s_%(column_0_name)s',
-#     'pk': 'pk_%(table_name)s',
-# }
 def unique_constraint_name(constraint, table):
-    # 1. Join all column names
     column_names = '_'.join([col.name for col in constraint.columns])
-
-    # 2. Construct the full candidate name
     fullname = f'uq_{table.name}_{column_names}'
 
-    # 3. Apply robust truncation/hashing if it exceeds Postgres limits
     if len(fullname) > 60:
         name_hash = hashlib.md5(fullname.encode('utf-8')).hexdigest()[:6]
-        # Truncate to 53 chars to leave room for the '_' and the 6-char hash
         return f'{fullname[:53]}_{name_hash}'
 
     return fullname
@@ -76,9 +52,7 @@ def unique_constraint_name(constraint, table):
 
 NAMING_CONVENTION = {
     'ix': 'ix_%(table_name)s_%(column_0_name)s',
-    # FIX: Use a string template that references your custom function below
     'uq': '%(unique_constraint_name)s',
-    # REGISTER: Your custom function as a token
     'unique_constraint_name': unique_constraint_name,
     'ck': 'ck_%(table_name)s_%(constraint_name)s',
     'fk': 'fk_%(table_name)s_%(column_0_name)s',
