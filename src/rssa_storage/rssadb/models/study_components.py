@@ -34,6 +34,9 @@ class Study(RssaBase, DateAuditMixin, SoftDeleteMixin):
     name: Mapped[str] = mapped_column(nullable=False)
     description: Mapped[str | None] = mapped_column()
 
+    completion_code: Mapped[str] = mapped_column(nullable=True)
+    redirect_url: Mapped[str] = mapped_column(nullable=True)
+
     created_by_id: Mapped[uuid.UUID | None] = mapped_column(
         sa.UUID(),
         sa.ForeignKey('users.id', ondelete='SET NULL'),

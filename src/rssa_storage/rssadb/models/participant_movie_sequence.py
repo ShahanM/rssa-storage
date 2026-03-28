@@ -5,6 +5,7 @@ import uuid
 from datetime import UTC, datetime
 
 import sqlalchemy as sa
+from sqlalchemy import ForeignKey, Index
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from rssa_storage.rssadb.models.rssa_base_models import RssaBase
@@ -13,6 +14,18 @@ from rssa_storage.shared import DateAuditMixin, SoftDeleteMixin
 
 def generate_seed():
     return random.randint(0, 2147483647)
+
+
+class ShuffledMovieListItem(RssaBase, DateAuditMixin, SoftDeleteMixin):
+    __tablename__ = 'shuffled_movie_list_items'
+
+    shuffle_list_id: Mapped[uuid.UUID] = mapped_column(
+        ForeignKey('pre_shuffled_movie_lists.id', ondelete='CASCADE'), index=True
+    )
+    movie_id: Mapped[uuid.UUID] = mapped_column(sa.UUID(), nullable=False)
+    position: Mapped[int] = mapped_column(index=True)
+
+    __table_args__ = (Index(None, 'shuffle_list_id', 'position'),)
 
 
 class PreShuffledMovieList(RssaBase, DateAuditMixin, SoftDeleteMixin):
@@ -30,7 +43,6 @@ class PreShuffledMovieList(RssaBase, DateAuditMixin, SoftDeleteMixin):
 
     __tablename__ = 'pre_shuffled_movie_lists'
 
-    movie_ids: Mapped[list[uuid.UUID]] = mapped_column(sa.ARRAY(sa.UUID()), nullable=False)
     subset_desc: Mapped[str | None] = mapped_column(sa.Text)
     seed: Mapped[int] = mapped_column(default=generate_seed)
 

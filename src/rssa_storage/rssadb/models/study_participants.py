@@ -5,6 +5,7 @@ from datetime import datetime
 from typing import TYPE_CHECKING
 
 import sqlalchemy as sa
+from sqlalchemy.dialects.postgresql import JSONB
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from rssa_storage.rssadb.models.rssa_base_models import DBBaseParticipantResponseModel, RssaBase
@@ -54,6 +55,7 @@ class StudyParticipant(RssaBase, DateAuditMixin):
         sa.ForeignKey('study_participant_types.id'), nullable=False
     )
     external_id: Mapped[str | None] = mapped_column()
+    source_meta: Mapped[dict] = mapped_column(JSONB, nullable=True)
     study_condition_id: Mapped[uuid.UUID] = mapped_column(sa.ForeignKey('study_conditions.id'), nullable=False)
     current_status: Mapped[str] = mapped_column(default='active')
 
