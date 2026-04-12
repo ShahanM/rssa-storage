@@ -5,7 +5,7 @@ from collections.abc import Sequence
 from dataclasses import dataclass, field
 from typing import Any, Generic, Protocol, TypeGuard, TypeVar, get_args
 
-from sqlalchemy import Select, UniqueConstraint, and_, func, inspect, or_, select
+from sqlalchemy import Select, UniqueConstraint, and_, func, inspect, or_, select, update
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import InstrumentedAttribute, load_only, selectinload, with_loader_criteria
@@ -414,6 +414,29 @@ class BaseRepository(Generic[T]):
             await self.db.flush()
             return True
         return False
+
+    async def batch_update(self, update_data: Sequence[dict[str, Any]]) -> bool:
+        """Update multiple instances in a single batch operation.
+
+        Args:
+            update_data: A list of dictionaries. Each dictionary MUST contain
+                        the primary key field (e.g., 'id') to identify the
+                        target record, along with the specific fields to update.
+
+        Returns:
+            True if the batch update executed successfully, False if no data was provided.
+        """
+        if not update_data:
+            return False
+
+        try:
+            # SQLAlchemy 2.0 bulk update: pass the update construct and the list of mappings
+            await self.db.execute(update(self.model), update_data)
+            await self.db.flush()
+            return True
+        except Exception as e:
+            await self.db.rollback()
+            raise e
 
     def _filter_similar(
         self, query: Select, filter_str: str | None = None, filter_cols: list[str] | None = None

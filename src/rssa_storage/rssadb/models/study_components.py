@@ -34,8 +34,9 @@ class Study(RssaBase, DateAuditMixin, SoftDeleteMixin):
     name: Mapped[str] = mapped_column(nullable=False)
     description: Mapped[str | None] = mapped_column()
 
-    completion_code: Mapped[str] = mapped_column(nullable=True)
-    redirect_url: Mapped[str] = mapped_column(nullable=True)
+    completion_code: Mapped[str | None] = mapped_column()
+    redirect_url: Mapped[str | None] = mapped_column()
+    dataset_subset: Mapped[str | None] = mapped_column()
 
     created_by_id: Mapped[uuid.UUID | None] = mapped_column(
         sa.UUID(),
@@ -184,14 +185,12 @@ class StudyStepPageContent(RssaOrderedBase, DateAuditMixin, SoftDeleteMixin):
     preamble: Mapped[str | None] = mapped_column(sa.Text)
 
     study_step_page_id: Mapped[uuid.UUID] = mapped_column(
-        sa.UUID(), sa.ForeignKey('study_step_pages.id', ondelete='CASCADE'), primary_key=True
+        sa.UUID(), sa.ForeignKey('study_step_pages.id', ondelete='CASCADE')
     )
     survey_construct_id: Mapped[uuid.UUID] = mapped_column(
-        sa.UUID(), sa.ForeignKey('survey_constructs.id', ondelete='CASCADE'), primary_key=True
+        sa.UUID(), sa.ForeignKey('survey_constructs.id', ondelete='CASCADE')
     )
-    survey_scale_id: Mapped[uuid.UUID] = mapped_column(
-        sa.ForeignKey('survey_scales.id', ondelete='CASCADE'), primary_key=True
-    )
+    survey_scale_id: Mapped[uuid.UUID] = mapped_column(sa.ForeignKey('survey_scales.id', ondelete='CASCADE'))
 
     study_step_page: Mapped['StudyStepPage'] = relationship('StudyStepPage', back_populates='study_step_page_contents')
     survey_construct: Mapped['SurveyConstruct'] = relationship(
@@ -199,12 +198,39 @@ class StudyStepPageContent(RssaOrderedBase, DateAuditMixin, SoftDeleteMixin):
     )
     survey_scale: Mapped['SurveyScale'] = relationship('SurveyScale', back_populates='study_step_page_contents')
 
+    study_attention_check: Mapped['StudyAttentionCheck | None'] = relationship(
+        'StudyAttentionCheck',
+        back_populates='study_step_page_content',
+    )
+
     @property
     def name(self) -> str:
         """Get the display name for the content."""
         if self.survey_construct:
             return self.survey_construct.name
         return 'Unknown Content'
+
+
+class StudyAttentionCheck(RssaBase, DateAuditMixin):
+    """Defines an attention check injected into a specific study page."""
+
+    __tablename__ = 'study_attention_checks'
+
+    text: Mapped[str] = mapped_column()
+    assigned_position: Mapped[int] = mapped_column()
+
+    study_step_id: Mapped[uuid.UUID] = mapped_column(sa.ForeignKey('study_steps.id', ondelete='CASCADE'))
+    study_step_page_id: Mapped[uuid.UUID] = mapped_column(sa.ForeignKey('study_step_pages.id', ondelete='CASCADE'))
+    study_step_page_content_id: Mapped[uuid.UUID] = mapped_column(
+        sa.ForeignKey('study_step_page_contents.id', ondelete='CASCADE')
+    )
+
+    survey_scale_id: Mapped[uuid.UUID] = mapped_column(sa.ForeignKey('survey_scales.id'))
+    expected_survey_scale_level_id: Mapped[uuid.UUID] = mapped_column(sa.ForeignKey('survey_scale_levels.id'))
+
+    study_step_page_content: Mapped['StudyStepPageContent'] = relationship(
+        'StudyStepPageContent', back_populates='study_attention_check'
+    )
 
 
 class StudyStepPage(RssaOrderedBase, DateAuditMixin, SoftDeleteMixin):

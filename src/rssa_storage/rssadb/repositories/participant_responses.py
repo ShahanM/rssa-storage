@@ -3,6 +3,7 @@
 from typing import TypeVar
 
 from rssa_storage.rssadb.models.participant_responses import (
+    ParticipantAttentionCheckResponse,
     ParticipantFreeformResponse,
     ParticipantInteractionLog,
     ParticipantRating,
@@ -56,6 +57,12 @@ class ParticipantInteractionLogRepository(BaseRepository[ParticipantInteractionL
 class ParticipantStudyInteractionResponseRepository(
     BaseParticipantResponseRepository[ParticipantStudyInteractionResponse]
 ):
+    """Repository for ParticipantStudyInteractionResponse model."""
+
+    pass
+
+
+class ParticipantAttentionCheckResponseRepository(BaseParticipantResponseRepository[ParticipantAttentionCheckResponse]):
     """Repository for ParticipantStudyInteractionResponse model."""
 
     pass

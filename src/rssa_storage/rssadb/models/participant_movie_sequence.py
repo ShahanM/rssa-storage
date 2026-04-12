@@ -5,7 +5,7 @@ import uuid
 from datetime import UTC, datetime
 
 import sqlalchemy as sa
-from sqlalchemy import ForeignKey, Index
+from sqlalchemy import ForeignKey
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from rssa_storage.rssadb.models.rssa_base_models import RssaBase
@@ -20,12 +20,16 @@ class ShuffledMovieListItem(RssaBase, DateAuditMixin, SoftDeleteMixin):
     __tablename__ = 'shuffled_movie_list_items'
 
     shuffle_list_id: Mapped[uuid.UUID] = mapped_column(
-        ForeignKey('pre_shuffled_movie_lists.id', ondelete='CASCADE'), index=True
+        ForeignKey('pre_shuffled_movie_lists.id', ondelete='CASCADE')
+        # index = True -> we comment this so alembic stops trying to add a single column index
     )
     movie_id: Mapped[uuid.UUID] = mapped_column(sa.UUID(), nullable=False)
     position: Mapped[int] = mapped_column(index=True)
 
-    __table_args__ = (Index(None, 'shuffle_list_id', 'position'),)
+    __table_args__ = (
+        sa.Index('ix_shuffled_movie_list_items_shuffle_list_id_position', 'shuffle_list_id', 'position'),
+        sa.Index('ix_shuffled_movie_list_items_shuffle_list_id', 'shuffle_list_id'),
+    )
 
 
 class PreShuffledMovieList(RssaBase, DateAuditMixin, SoftDeleteMixin):
@@ -45,10 +49,6 @@ class PreShuffledMovieList(RssaBase, DateAuditMixin, SoftDeleteMixin):
 
     subset_desc: Mapped[str | None] = mapped_column(sa.Text)
     seed: Mapped[int] = mapped_column(default=generate_seed)
-
-    def __repr__(self):
-        """String representation of PreShuffledMovieList."""
-        return f'<PreShuffledMovieList(list_id={self.id}, num_movies={len(self.movie_ids) if self.movie_ids else 0})>'
 
 
 class StudyParticipantMovieSession(RssaBase, DateAuditMixin, SoftDeleteMixin):

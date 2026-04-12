@@ -19,7 +19,6 @@ dependencies = [
 requires = ["hatchling"]
 build-backend = "hatchling.build"
 
-# DISTRIBUTION CONFIGURATION
 [tool.hatch.build.targets.wheel]
 packages = ["src/rssa_storage"]
 
@@ -30,8 +29,8 @@ include = ["src"]
 dev = [
 	"pytest>=8.0",
 	"ruff>=0.1",
-	"pylint>=3.0", # Added this
-	"pylint-sqlalchemy>=0.2", # Added this so the plugin loads
+	"pylint>=3.0",
+	"pylint-sqlalchemy>=0.2",
 	"requests>=2.32.5",
 	"binpickle>=0.3.4",
 	"pre-commit>=4.5.1",
@@ -39,14 +38,15 @@ dev = [
 
 [tool.ruff]
 line-length = 120
-target-version = "py311"  # Updated to match project requirement
-exclude = ["__init__.py"]
+target-version = "py311"
 fix = true
 
 [tool.ruff.lint]
 ignore = [
 	"W191", # indentation contains tabs
-	# "B008", # function call in default argument (Common in Pydantic/FastAPI contexts)
+	"B008", # function call in default argument (Common in Pydantic/FastAPI contexts)
+	"D1",
+	"D104",
 ]
 select = [
 	"E",  # Pyflakes errors

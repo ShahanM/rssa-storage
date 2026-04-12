@@ -7,6 +7,7 @@ from sqlalchemy.orm import selectinload
 from rssa_storage.rssadb.models.participant_responses import Feedback
 from rssa_storage.rssadb.models.study_components import (
     Study,
+    StudyAttentionCheck,
     StudyAuthorization,
     StudyCondition,
     StudyStep,
@@ -40,7 +41,6 @@ class StudyRepository(BaseRepository[Study]):
             return []
 
         options = options or RepoQueryOptions()
-        # Merge existing ID filters if any
         if options.ids:
             options.ids = list(set(options.ids) & set(study_ids))
             if not options.ids:
@@ -61,7 +61,6 @@ class StudyRepository(BaseRepository[Study]):
             search_text=search,
             search_columns=self.SEARCHABLE_COLUMNS,
         )
-        # return await self.count(filter_str=search, filter_cols=self.SEARCHABLE_COLUMNS, filters={'id': study_ids})
         return await self.count(options)
 
 
@@ -209,5 +208,11 @@ class FeedbackRepository(BaseRepository[Feedback]):
 
     Inherits from BaseRepository to provide CRUD operations for Feedback model.
     """
+
+    pass
+
+
+class StudyAttentionCheckRepository(BaseRepository[StudyAttentionCheck]):
+    """Repository for managing StudyAttentionCheck entitied in the database."""
 
     pass

@@ -103,3 +103,14 @@ class ParticipantStudyInteractionResponse(DBBaseParticipantResponseModel, DateAu
     __table_args__ = (
         sa.UniqueConstraint('study_id', 'study_participant_id', 'context_tag', name='uq_study_participant_context_tag'),
     )
+
+
+class ParticipantAttentionCheckResponse(DBBaseParticipantResponseModel, DateAuditMixin):
+    """Stores a participant's response to an attention check."""
+
+    __tablename__ = 'participant_attention_check_responses'
+
+    study_attention_check_id: Mapped[uuid.UUID] = mapped_column(sa.ForeignKey('study_attention_checks.id'))
+
+    survey_scale_id: Mapped[uuid.UUID] = mapped_column(sa.ForeignKey('survey_scales.id'))
+    responded_survey_scale_level_id: Mapped[uuid.UUID | None] = mapped_column(sa.ForeignKey('survey_scale_levels.id'))

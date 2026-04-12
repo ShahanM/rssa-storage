@@ -1,9 +1,9 @@
 """Movie repository module."""
 
 from collections.abc import Sequence
-from typing import Any
+from typing import Any, cast
 
-from sqlalchemy import func, select
+from sqlalchemy import Table, bindparam, func, select, update
 from sqlalchemy.orm import selectinload
 
 from rssa_storage.moviedb.models.movies import Movie
@@ -47,7 +47,6 @@ class MovieRepository(BaseRepository[Movie]):
     async def get_by_exact_ilike(self, field_name: str, value: str) -> Sequence[Movie]:
         """Get movies by exact case-insensitive match."""
         column = self._get_column(field_name)
-        # Using ILIKE logic: lower(column) == lower(value)
         query = select(Movie).where(func.lower(column) == value.lower())
         result = await self.db.execute(query)
         return result.scalars().all()
@@ -58,3 +57,27 @@ class MovieRepository(BaseRepository[Movie]):
             raise AttributeError(f'Model "{self.model.__name__}" has no attribute "{field_name}" to query by.')
 
         return attr
+
+    async def batch_update_stats_by_movielens_id(self, update_data: list[dict[str, Any]]) -> bool:
+        """Bulk update movie stats using movielens_id instead of the primary key."""
+        if not update_data:
+            return False
+
+        try:
+            table = cast(Table, self.model.__table__)
+
+            stmt = (
+                update(table)
+                .where(table.c.movielens_id == bindparam('b_movielens_id'))
+                .values(
+                    movielens_rate_count=bindparam('movielens_rate_count'),
+                    movielens_avg_rating=bindparam('movielens_avg_rating'),
+                )
+            )
+            await self.db.execute(stmt, update_data)
+            await self.db.flush()
+            return True
+
+        except Exception as e:
+            await self.db.rollback()
+            raise e

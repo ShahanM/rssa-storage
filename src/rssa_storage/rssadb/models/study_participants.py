@@ -93,14 +93,17 @@ class Demographic(RssaBase, DateAuditMixin):
     study_participant_id: Mapped[uuid.UUID] = mapped_column(
         sa.UUID(), sa.ForeignKey('study_participants.id', ondelete='CASCADE')
     )
-    age_range: Mapped[str] = mapped_column()
-    gender: Mapped[str] = mapped_column()
+    age_range: Mapped[str | None] = mapped_column()
+    gender: Mapped[str | None] = mapped_column()
     gender_other: Mapped[str | None] = mapped_column()
-    race: Mapped[str] = mapped_column()
+    race: Mapped[str | None] = mapped_column()
     race_other: Mapped[str | None] = mapped_column()
-    education: Mapped[str] = mapped_column()
-    country: Mapped[str] = mapped_column()
+    education: Mapped[str | None] = mapped_column()
+    country: Mapped[str | None] = mapped_column()
     state_region: Mapped[str | None] = mapped_column()
+    urbanicity: Mapped[str | None] = mapped_column()
+
+    raw_json: Mapped[dict] = mapped_column(JSONB)
 
     version: Mapped[int] = mapped_column(default=1, server_default=sa.text('1'))
     discarded: Mapped[bool] = mapped_column(default=False)
