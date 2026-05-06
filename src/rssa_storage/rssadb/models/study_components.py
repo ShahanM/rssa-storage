@@ -1,5 +1,6 @@
 """SQLAlchemy models for study components in the RSSA API."""
 
+import enum
 import uuid
 from datetime import datetime
 from typing import TYPE_CHECKING
@@ -14,6 +15,32 @@ from rssa_storage.shared.generators import generate_ref_code
 
 if TYPE_CHECKING:
     from rssa_storage.rssadb.models.study_participants import StudyParticipant
+
+
+class ElicitationType(enum.Enum):
+    ITEM_RATING = 'item_rating'
+    GENRE_SELECTION = 'genre_selection'
+    TOPIC_PREFERENCE = 'topic_preference'
+
+
+class ElicitationPolicy(RssaBase, DateAuditMixin, SoftDeleteMixin):
+    """SQLAlchemy model for the 'elicitation_policies' table.
+
+    Attributes:
+        name: Name of the policy.
+        elicitation_type: The ElicitationType.
+        min_threshold: The minimum number to indicate preferences.
+        domain: The category of items.
+    """
+
+    __tablename__ = 'elicitation_policies'
+
+    name: Mapped[str] = mapped_column()
+    elicitation_type: Mapped[ElicitationType] = mapped_column()
+    min_threshold: Mapped[int] = mapped_column()
+    domain: Mapped[str] = mapped_column()
+
+    studies: Mapped[list['Study']] = relationship(back_populates='default_elicitation_policy')
 
 
 class Study(RssaBase, DateAuditMixin, SoftDeleteMixin):
@@ -42,17 +69,22 @@ class Study(RssaBase, DateAuditMixin, SoftDeleteMixin):
         sa.UUID(),
         sa.ForeignKey('users.id', ondelete='SET NULL'),
     )
+    created_by: Mapped['User'] = relationship('User', back_populates='studies_created', foreign_keys=[created_by_id])
+
     owner_id: Mapped[uuid.UUID | None] = mapped_column(
         sa.UUID(),
         sa.ForeignKey('users.id', ondelete='SET NULL'),
     )
-
-    created_by: Mapped['User'] = relationship('User', back_populates='studies_created', foreign_keys=[created_by_id])
     owner: Mapped['User'] = relationship('User', back_populates='studies_owned', foreign_keys=[owner_id])
+
+    default_elicitation_policy_id: Mapped[uuid.UUID | None] = mapped_column(
+        sa.UUID(), sa.ForeignKey('elicitation_policies.id')
+    )
+    default_elicitation_policy: Mapped['ElicitationPolicy'] = relationship(back_populates='studies')
+
     authorizations: Mapped[list['StudyAuthorization']] = relationship(
         'StudyAuthorization', back_populates='study', cascade='all, delete-orphan'
     )
-
     study_steps: Mapped[list['StudyStep']] = relationship(
         'StudyStep',
         back_populates='study',
@@ -80,7 +112,6 @@ class StudyCondition(RssaBase, DateAuditMixin, SoftDeleteMixin):
 
     __tablename__ = 'study_conditions'
 
-    # Metadata
     enabled: Mapped[bool] = mapped_column(default=True)
 
     name: Mapped[str] = mapped_column(nullable=False)
@@ -88,30 +119,26 @@ class StudyCondition(RssaBase, DateAuditMixin, SoftDeleteMixin):
     recommender_key: Mapped[str | None] = mapped_column()
     recommendation_count: Mapped[int] = mapped_column(default=10)
 
-    short_code: Mapped[str] = mapped_column(
-        sa.String(48),
-        nullable=False,
-        default=generate_ref_code,
-    )
-
-    view_link_key: Mapped[str | None] = mapped_column(
-        sa.String(48),
-        nullable=True,
-    )
-
-    authorized_test_code: Mapped[str] = mapped_column(
-        sa.String(16),
-        nullable=True,
-    )
+    short_code: Mapped[str] = mapped_column(sa.String(48), nullable=False, default=generate_ref_code)
+    view_link_key: Mapped[str | None] = mapped_column(sa.String(48), nullable=True)
+    authorized_test_code: Mapped[str] = mapped_column(sa.String(16), nullable=True)
 
     study_id: Mapped[uuid.UUID] = mapped_column(sa.ForeignKey('studies.id', ondelete='CASCADE'), nullable=False)
-
     study: Mapped['Study'] = relationship('Study', back_populates='study_conditions')
+
+    override_policy_id: Mapped[uuid.UUID | None] = mapped_column(sa.UUID(), sa.ForeignKey('elicitation_policies.id'))
+    override_policy: Mapped[ElicitationPolicy | None] = relationship()
+
     study_participants: Mapped[list['StudyParticipant']] = relationship(
         'StudyParticipant', back_populates='study_condition', uselist=True, cascade='all, delete-orphan'
     )
 
     __table_args__ = (sa.UniqueConstraint('study_id', 'short_code', deferrable=True, initially='DEFERRED'),)
+
+    @property
+    def active_policy(self) -> ElicitationPolicy | None:
+        """Helper to safely resolve the effective policy for this condition."""
+        return self.override_policy or self.study.default_elicitation_policy
 
 
 class StudyStep(RssaOrderedBase, DateAuditMixin, SoftDeleteMixin):

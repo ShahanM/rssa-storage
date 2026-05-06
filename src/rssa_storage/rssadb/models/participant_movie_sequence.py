@@ -50,6 +50,8 @@ class PreShuffledMovieList(RssaBase, DateAuditMixin, SoftDeleteMixin):
     subset_desc: Mapped[str | None] = mapped_column(sa.Text)
     seed: Mapped[int] = mapped_column(default=generate_seed)
 
+    movie_ids: Mapped[list[uuid.UUID]] = mapped_column(sa.ARRAY(sa.UUID()), nullable=False)
+
 
 class StudyParticipantMovieSession(RssaBase, DateAuditMixin, SoftDeleteMixin):
     """SQLAlchemy model for the 'study_participant_movie_sessions' table.
