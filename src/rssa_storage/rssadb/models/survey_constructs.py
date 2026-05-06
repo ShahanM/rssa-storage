@@ -1,6 +1,7 @@
 """SQLAlchemy models for survey constructs and related entities."""
 
 import uuid
+from typing import TYPE_CHECKING
 
 import sqlalchemy as sa
 from sqlalchemy.ext.orderinglist import ordering_list
@@ -8,6 +9,9 @@ from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from rssa_storage.rssadb.models.rssa_base_models import RssaBase, RssaOrderedBase
 from rssa_storage.shared import DateAuditMixin, EnabledMixin, SoftDeleteMixin
+
+if TYPE_CHECKING:
+    from .study_components import StudyStepPageContent
 
 
 class SurveyItem(RssaOrderedBase, DateAuditMixin, SoftDeleteMixin, EnabledMixin):
