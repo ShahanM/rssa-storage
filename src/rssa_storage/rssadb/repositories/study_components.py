@@ -148,7 +148,13 @@ class StudyConditionRepository(BaseRepository[StudyCondition]):
                 StudyCondition.name.label('study_condition_name'),
                 func.count(StudyParticipant.id).label('participant_count'),
             )
-            .join(StudyParticipant, StudyParticipant.study_condition_id == StudyCondition.id, isouter=True)
+            .join(
+                StudyParticipant,
+                and_(
+                    StudyParticipant.study_condition_id == StudyCondition.id, StudyParticipant.external_id == 'VERIFIED'
+                ),
+                isouter=True,
+            )
             .where(StudyCondition.study_id == study_id)
             .group_by(StudyCondition.id, StudyCondition.name)
             .order_by(StudyCondition.name)
