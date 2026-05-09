@@ -12,6 +12,8 @@ from sqlalchemy.dialects.postgresql import JSONB, UUID
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from rssa_storage.rssadb.models.rssa_base_models import DBBaseParticipantResponseModel
+from rssa_storage.rssadb.models.study_components import StudyAttentionCheck
+from rssa_storage.rssadb.models.study_participants import StudyParticipant
 from rssa_storage.rssadb.models.survey_constructs import SurveyScaleLevel
 from rssa_storage.shared import DateAuditMixin
 
@@ -114,3 +116,8 @@ class ParticipantAttentionCheckResponse(DBBaseParticipantResponseModel, DateAudi
 
     survey_scale_id: Mapped[uuid.UUID] = mapped_column(sa.ForeignKey('survey_scales.id'))
     responded_survey_scale_level_id: Mapped[uuid.UUID | None] = mapped_column(sa.ForeignKey('survey_scale_levels.id'))
+
+    study_participant: Mapped['StudyParticipant'] = relationship(
+        'StudyParticipant', back_populates='attention_check_responses'
+    )
+    study_attention_check: Mapped['StudyAttentionCheck'] = relationship()

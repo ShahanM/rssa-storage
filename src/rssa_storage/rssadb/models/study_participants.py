@@ -8,6 +8,7 @@ import sqlalchemy as sa
 from sqlalchemy.dialects.postgresql import JSONB
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
+from rssa_storage.rssadb.models.participant_responses import ParticipantAttentionCheckResponse
 from rssa_storage.rssadb.models.rssa_base_models import DBBaseParticipantResponseModel, RssaBase
 from rssa_storage.shared import DateAuditMixin
 from rssa_storage.shared.db_utils import PortableJSON
@@ -69,6 +70,10 @@ class StudyParticipant(RssaBase, DateAuditMixin):
         'ParticipantStudySession', back_populates='study_participant', cascade='all, delete-orphan'
     )
     study_condition: Mapped['StudyCondition'] = relationship('StudyCondition', back_populates='study_participants')
+
+    attention_check_responses: Mapped[list['ParticipantAttentionCheckResponse']] = relationship(
+        'ParticipantAttentionCheckResponse', back_populates='study_participant', viewonly=True
+    )
 
 
 class Demographic(RssaBase, DateAuditMixin):
