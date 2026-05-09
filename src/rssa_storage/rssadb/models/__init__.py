@@ -4,7 +4,6 @@ Treating this as a model registry aggregator.
 
 from .participant_movie_sequence import (
     PreShuffledMovieList,
-    ShuffledMovieListItem,
     StudyParticipantMovieSession,
 )
 from .participant_responses import (
@@ -34,7 +33,6 @@ from .study_participants import (
     ParticipantRecommendationContext,
     ParticipantStudySession,
     StudyParticipant,
-    StudyParticipantType,
 )
 from .survey_constructs import (
     SurveyConstruct,
@@ -66,7 +64,6 @@ __all__ = [
     'ParticipantRecommendationContext',
     'ParticipantStudySession',
     'StudyParticipant',
-    'StudyParticipantType',
     # Participant Responses
     'Feedback',
     'ParticipantAttentionCheckResponse',
@@ -77,6 +74,5 @@ __all__ = [
     'ParticipantSurveyResponse',
     # Participant Movie Sequence
     'PreShuffledMovieList',
-    'ShuffledMovieListItem',
     'StudyParticipantMovieSession',
 ]
