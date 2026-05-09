@@ -5,7 +5,6 @@ import uuid
 from datetime import UTC, datetime
 
 import sqlalchemy as sa
-from sqlalchemy import ForeignKey
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from rssa_storage.rssadb.models.rssa_base_models import RssaBase
@@ -14,22 +13,6 @@ from rssa_storage.shared import DateAuditMixin, SoftDeleteMixin
 
 def generate_seed():
     return random.randint(0, 2147483647)
-
-
-class ShuffledMovieListItem(RssaBase, DateAuditMixin, SoftDeleteMixin):
-    __tablename__ = 'shuffled_movie_list_items'
-
-    shuffle_list_id: Mapped[uuid.UUID] = mapped_column(
-        ForeignKey('pre_shuffled_movie_lists.id', ondelete='CASCADE')
-        # index = True -> we comment this so alembic stops trying to add a single column index
-    )
-    movie_id: Mapped[uuid.UUID] = mapped_column(sa.UUID(), nullable=False)
-    position: Mapped[int] = mapped_column(index=True)
-
-    __table_args__ = (
-        sa.Index('ix_shuffled_movie_list_items_shuffle_list_id_position', 'shuffle_list_id', 'position'),
-        sa.Index('ix_shuffled_movie_list_items_shuffle_list_id', 'shuffle_list_id'),
-    )
 
 
 class PreShuffledMovieList(RssaBase, DateAuditMixin, SoftDeleteMixin):

@@ -17,22 +17,6 @@ if TYPE_CHECKING:
     from rssa_storage.rssadb.models.study_components import StudyCondition
 
 
-class StudyParticipantType(RssaBase):
-    """SQLAlchemy model for the 'study_participant_types' table.
-
-    Attributes:
-        type: Type of participant (e.g., 'student', 'professional').
-    """
-
-    __tablename__ = 'study_participant_types'
-
-    type: Mapped[str] = mapped_column()
-
-    study_participants: Mapped[list['StudyParticipant']] = relationship(
-        'StudyParticipant', back_populates='study_participant_type'
-    )
-
-
 class StudyParticipant(RssaBase, DateAuditMixin):
     """SQLAlchemy model for the 'study_participants' table.
 
@@ -49,23 +33,17 @@ class StudyParticipant(RssaBase, DateAuditMixin):
 
     __tablename__ = 'study_participants'
 
-    study_id: Mapped[uuid.UUID] = mapped_column(sa.ForeignKey('studies.id'), nullable=False)
-    discarded: Mapped[bool] = mapped_column(default=False, nullable=False)
+    study_id: Mapped[uuid.UUID] = mapped_column(sa.ForeignKey('studies.id'))
+    discarded: Mapped[bool] = mapped_column(default=False)
+    is_verified: Mapped[bool] = mapped_column(default=False, server_default=sa.text('FALSE'))
 
-    study_participant_type_id: Mapped[uuid.UUID] = mapped_column(
-        sa.ForeignKey('study_participant_types.id'), nullable=False
-    )
-    external_id: Mapped[str | None] = mapped_column()
     source_meta: Mapped[dict] = mapped_column(JSONB, nullable=True)
-    study_condition_id: Mapped[uuid.UUID] = mapped_column(sa.ForeignKey('study_conditions.id'), nullable=False)
+    study_condition_id: Mapped[uuid.UUID] = mapped_column(sa.ForeignKey('study_conditions.id'))
     current_status: Mapped[str] = mapped_column(default='active')
 
-    current_step_id: Mapped[uuid.UUID] = mapped_column(sa.ForeignKey('study_steps.id'), nullable=False)
-    current_page_id: Mapped[uuid.UUID | None] = mapped_column(sa.ForeignKey('study_step_pages.id'), nullable=True)
+    current_step_id: Mapped[uuid.UUID] = mapped_column(sa.ForeignKey('study_steps.id'))
+    current_page_id: Mapped[uuid.UUID | None] = mapped_column(sa.ForeignKey('study_step_pages.id'))
 
-    study_participant_type: Mapped['StudyParticipantType'] = relationship(
-        'StudyParticipantType', back_populates='study_participants'
-    )
     participant_study_session: Mapped['ParticipantStudySession'] = relationship(
         'ParticipantStudySession', back_populates='study_participant', cascade='all, delete-orphan'
     )

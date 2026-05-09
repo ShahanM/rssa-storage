@@ -4,14 +4,12 @@ import uuid
 
 from sqlalchemy.orm import selectinload
 
-# from sqlalchemy.orm import selectinload
 from rssa_storage.rssadb.models.participant_movie_sequence import StudyParticipantMovieSession
 from rssa_storage.rssadb.models.study_participants import (
     Demographic,
     ParticipantRecommendationContext,
     ParticipantStudySession,
     StudyParticipant,
-    StudyParticipantType,
 )
 from rssa_storage.shared import BaseRepository, RepoQueryOptions
 from rssa_storage.shared.mixins import VersionedRepositoryMixin
@@ -21,17 +19,6 @@ class StudyParticipantRepository(BaseRepository[StudyParticipant]):
     """Repository for StudyParticipant model."""
 
     LOAD_ASSIGNED_CONDITION = (selectinload(StudyParticipant.study_condition),)
-    LOAD_CONDITION_AND_TYPE = (
-        selectinload(StudyParticipant.study_condition),
-        selectinload(StudyParticipant.study_participant_type),
-    )
-    # pass
-
-
-class StudyParticipantTypeRepository(BaseRepository[StudyParticipantType]):
-    """Repository for StudyParticipantType model."""
-
-    pass
 
 
 class ParticipantRecommendationContextRepository(BaseRepository[ParticipantRecommendationContext]):
