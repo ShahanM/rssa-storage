@@ -8,12 +8,12 @@ import sqlalchemy as sa
 from sqlalchemy.dialects.postgresql import JSONB
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
-from rssa_storage.rssadb.models.participant_responses import ParticipantAttentionCheckResponse
 from rssa_storage.rssadb.models.rssa_base_models import DBBaseParticipantResponseModel, RssaBase
 from rssa_storage.shared import DateAuditMixin
 from rssa_storage.shared.db_utils import PortableJSON
 
 if TYPE_CHECKING:
+    from rssa_storage.rssadb.models.participant_responses import ParticipantAttentionCheckResponse
     from rssa_storage.rssadb.models.study_components import StudyCondition
 
 

@@ -5,17 +5,19 @@ freeform responses, ratings, and interaction logs.
 """
 
 import uuid
-from typing import Optional
+from typing import TYPE_CHECKING, Optional
 
 import sqlalchemy as sa
 from sqlalchemy.dialects.postgresql import JSONB, UUID
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from rssa_storage.rssadb.models.rssa_base_models import DBBaseParticipantResponseModel
-from rssa_storage.rssadb.models.study_components import StudyAttentionCheck
-from rssa_storage.rssadb.models.study_participants import StudyParticipant
 from rssa_storage.rssadb.models.survey_constructs import SurveyScaleLevel
 from rssa_storage.shared import DateAuditMixin
+
+if TYPE_CHECKING:
+    from rssa_storage.rssadb.models.study_components import StudyAttentionCheck
+    from rssa_storage.rssadb.models.study_participants import StudyParticipant
 
 
 # TODO: This table will be removed from the participant response flow. It will be used for testing and dev feedback.
