@@ -1,7 +1,9 @@
 """Repository related to StudyParticipant models."""
 
 import uuid
+from typing import Any
 
+from sqlalchemy import Row, and_, func, select
 from sqlalchemy.orm import selectinload
 
 from rssa_storage.rssadb.models.participant_movie_sequence import StudyParticipantMovieSession
@@ -59,4 +61,35 @@ class ParticipantDemographicRepository(BaseRepository[Demographic], VersionedRep
         db (AsyncSession): The asynchronous database session.
     """
 
-    pass
+    async def get_aggregate_distribution(
+        self, study_id: uuid.UUID, demographic_field: str, verified_participants_only: bool = False
+    ) -> list[Row[tuple[Any, int]]]:
+        """
+        Get aggregate counts for a specific demographic field within a study.
+        """
+        target_column = getattr(self.model, demographic_field)
+
+        join_conditions = [
+            StudyParticipant.id == Demographic.study_participant_id,
+            StudyParticipant.study_id == study_id,
+            StudyParticipant.discarded.is_(False),
+        ]
+
+        if verified_participants_only:
+            join_conditions.append(StudyParticipant.is_verified.is_(True))
+
+        query = (
+            select(target_column.label('category'), func.count(Demographic.id).label('count'))
+            .join(
+                StudyParticipant,
+                and_(*join_conditions),
+            )
+            .where(StudyParticipant.discarded.is_(False))
+            .group_by(target_column)
+            .order_by(func.count(StudyParticipant.id).desc())
+        )
+
+        query = self._apply_soft_delete_filter(query)
+
+        result = await self.db.execute(query)
+        return list(result.all())

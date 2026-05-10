@@ -44,13 +44,16 @@ class StudyParticipant(RssaBase, DateAuditMixin):
     current_step_id: Mapped[uuid.UUID] = mapped_column(sa.ForeignKey('study_steps.id'))
     current_page_id: Mapped[uuid.UUID | None] = mapped_column(sa.ForeignKey('study_step_pages.id'))
 
+    # Relationships
     participant_study_session: Mapped['ParticipantStudySession'] = relationship(
         'ParticipantStudySession', back_populates='study_participant', cascade='all, delete-orphan'
     )
     study_condition: Mapped['StudyCondition'] = relationship('StudyCondition', back_populates='study_participants')
-
     attention_check_responses: Mapped[list['ParticipantAttentionCheckResponse']] = relationship(
         'ParticipantAttentionCheckResponse', back_populates='study_participant', viewonly=True
+    )
+    demographics: Mapped[list['Demographic']] = relationship(
+        'Demographic', back_populates='study_participant', cascade='all, delete-orphan'
     )
 
 
@@ -90,6 +93,8 @@ class Demographic(RssaBase, DateAuditMixin):
 
     version: Mapped[int] = mapped_column(default=1, server_default=sa.text('1'))
     discarded: Mapped[bool] = mapped_column(default=False)
+
+    study_participant: Mapped['StudyParticipant'] = relationship('StudyParticipant', back_populates='demographics')
 
 
 class ParticipantStudySession(RssaBase, DateAuditMixin):
