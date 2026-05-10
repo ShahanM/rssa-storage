@@ -2,25 +2,16 @@
 
 import uuid
 from collections.abc import Sequence
-from dataclasses import dataclass
 from typing import TypeVar, cast
 
 from sqlalchemy import case, func, select, update
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from rssa_storage.shared.repo_utils import merge_repo_query_options
-
-from .base_repo import BaseRepository, RepoQueryOptions
+from .base_repo import BaseRepository
 from .db_utils import SharedOrderedModel
+from .repo_utils import OrderedRepoQueryOptions, RepoQueryOptions, merge_repo_query_options
 
 ModelType = TypeVar('ModelType', bound=SharedOrderedModel)
-
-
-@dataclass
-class OrderedRepoQueryOptions(RepoQueryOptions):
-    """Query options for ordered repositories."""
-
-    min_order_position: int | None = None
 
 
 class BaseOrderedRepository(BaseRepository[ModelType]):

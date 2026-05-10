@@ -1,5 +1,38 @@
-from .base_ordered_repo import OrderedRepoQueryOptions
-from .base_repo import RepoQueryOptions
+import uuid
+from collections.abc import Sequence
+from dataclasses import dataclass, field
+from typing import Any
+
+from sqlalchemy.sql.base import ExecutableOption
+
+
+@dataclass
+class RepoQueryOptions:
+    """Data class to encapsulate common query options for repositories."""
+
+    ids: list[uuid.UUID] | None = None
+    filters: dict[str, Any] = field(default_factory=dict)
+    filter_ranges: list[tuple[str, str, Any]] = field(default_factory=list)
+    filter_ilike: dict[str, str] = field(default_factory=dict)
+    filter_not_null: list[str] = field(default_factory=list)
+    search_text: str | None = None
+    search_columns: list[str] = field(default_factory=list)
+    sort_by: str | None = None
+    sort_desc: bool = False
+    limit: int | None = None
+    offset: int | None = None
+    include_deleted: bool = False
+    load_options: Sequence[ExecutableOption] | None = field(default_factory=list)
+    load_columns: list[str] | None = None
+    load_relationships: dict[str, Any] | None = field(default_factory=dict)
+
+
+@dataclass
+class OrderedRepoQueryOptions(RepoQueryOptions):
+    """Query options for ordered repositories."""
+
+    min_order_position: int | None = None
+
 
 QueryUnionType = RepoQueryOptions | OrderedRepoQueryOptions
 
