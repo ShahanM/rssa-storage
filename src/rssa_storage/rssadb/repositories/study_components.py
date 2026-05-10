@@ -134,7 +134,7 @@ class StudyConditionRepository(BaseRepository[StudyCondition]):
     """
 
     async def get_participant_count_by_condition(
-        self, study_id: uuid.UUID, enabled_only: bool = False
+        self, study_id: uuid.UUID, enabled_only: bool = False, verified_participants_only: bool = False
     ) -> list[Row[tuple[uuid.UUID, str, int]]]:
         """Get participant counts grouped by study conditions for a specific study.
 
@@ -145,17 +145,20 @@ class StudyConditionRepository(BaseRepository[StudyCondition]):
         Returns:
             A list of rows containing condition ID, condition name, and participant count.
         """
+        join_conditions = [
+            StudyParticipant.study_condition_id == StudyCondition.id,
+            StudyParticipant.discarded.is_(False),
+        ]
+        if verified_participants_only:
+            join_conditions.append(StudyParticipant.is_verified.is_(True))
+
         query = select(
             StudyCondition.id.label('study_condition_id'),
             StudyCondition.name.label('study_condition_name'),
             func.count(StudyParticipant.id).label('participant_count'),
-        ).join(
-            StudyParticipant,
-            and_(StudyParticipant.study_condition_id == StudyCondition.id, StudyParticipant.discarded.is_(False)),
-            isouter=True,
-        )
-        query = query.where(StudyCondition.study_id == study_id)
+        ).join(StudyParticipant, and_(*join_conditions), isouter=True)
 
+        query = query.where(StudyCondition.study_id == study_id)
         if enabled_only:
             query = query.where(StudyCondition.enabled.is_(True))
 
