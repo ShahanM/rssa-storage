@@ -63,6 +63,10 @@ class ParticipantFreeformResponse(DBBaseParticipantResponseModel, DateAuditMixin
 
     response_text: Mapped[str] = mapped_column(sa.Text)
 
+    study_participant: Mapped['StudyParticipant'] = relationship(
+        'StudyParticipant', back_populates='freeform_responses'
+    )
+
     __table_args__ = (
         sa.UniqueConstraint('study_id', 'study_participant_id', 'context_tag', name='uq_freeform_context'),
     )
@@ -103,6 +107,10 @@ class ParticipantStudyInteractionResponse(DBBaseParticipantResponseModel, DateAu
     __tablename__ = 'participant_study_interaction_responses'
 
     payload_json: Mapped[dict] = mapped_column(JSONB, nullable=False)
+
+    study_participant: Mapped['StudyParticipant'] = relationship(
+        'StudyParticipant', back_populates='activity_responses'
+    )
 
     __table_args__ = (
         sa.UniqueConstraint('study_id', 'study_participant_id', 'context_tag', name='uq_study_participant_context_tag'),

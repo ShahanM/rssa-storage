@@ -13,7 +13,11 @@ from rssa_storage.shared import DateAuditMixin
 from rssa_storage.shared.db_utils import PortableJSON
 
 if TYPE_CHECKING:
-    from rssa_storage.rssadb.models.participant_responses import ParticipantAttentionCheckResponse
+    from rssa_storage.rssadb.models.participant_responses import (
+        ParticipantAttentionCheckResponse,
+        ParticipantFreeformResponse,
+        ParticipantStudyInteractionResponse,
+    )
     from rssa_storage.rssadb.models.study_components import StudyCondition
 
 
@@ -49,11 +53,18 @@ class StudyParticipant(RssaBase, DateAuditMixin):
         'ParticipantStudySession', back_populates='study_participant', cascade='all, delete-orphan'
     )
     study_condition: Mapped['StudyCondition'] = relationship('StudyCondition', back_populates='study_participants')
+    demographics: Mapped[list['Demographic']] = relationship(
+        'Demographic', back_populates='study_participant', cascade='all, delete-orphan'
+    )
+    # View Only Relationships
     attention_check_responses: Mapped[list['ParticipantAttentionCheckResponse']] = relationship(
         'ParticipantAttentionCheckResponse', back_populates='study_participant', viewonly=True
     )
-    demographics: Mapped[list['Demographic']] = relationship(
-        'Demographic', back_populates='study_participant', cascade='all, delete-orphan'
+    freeform_responses: Mapped[list['ParticipantFreeformResponse']] = relationship(
+        'ParticipantFreeformResponse', back_populates='study_participant', viewonly=True
+    )
+    activity_responses: Mapped[list['ParticipantStudyInteractionResponse']] = relationship(
+        'ParticipantStudyInteractionResponse', back_populates='study_participant', viewonly=True
     )
 
 
