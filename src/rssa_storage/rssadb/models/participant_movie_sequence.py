@@ -54,6 +54,7 @@ class PreShuffledMovieList(RssaBase, DateAuditMixin, SoftDeleteMixin):
     popular_growth_rate: Mapped[float | None]
     initial_popular_schedue: Mapped[list[int] | None] = mapped_column(sa.ARRAY(sa.Integer))
     genre_bucket_size: Mapped[int | None]
+    active_anchor_limit: Mapped[int | None]
     genre_repr_per_page: Mapped[float | None]
 
 
