@@ -32,8 +32,29 @@ class PreShuffledMovieList(RssaBase, DateAuditMixin, SoftDeleteMixin):
 
     subset_desc: Mapped[str | None] = mapped_column(sa.Text)
     seed: Mapped[int] = mapped_column(default=generate_seed)
-
     movie_ids: Mapped[list[uuid.UUID]] = mapped_column(sa.ARRAY(sa.UUID()), nullable=False)
+
+    # --- Filtering Parameters ---
+    strategy: Mapped[str | None] = mapped_column(sa.String(100))
+    year_min: Mapped[int | None]
+    year_max: Mapped[int | None]
+    genre: Mapped[str | None] = mapped_column(sa.String(100))
+    min_rate_count: Mapped[int | None] = mapped_column(default=50)
+    exclude_no_emotions: Mapped[bool] = mapped_column(default=False, server_default=sa.text('FALSE'))
+    exclude_no_recommendations: Mapped[bool] = mapped_column(default=False, server_default=sa.text('FALSE'))
+
+    # --- Algorithm Parameters ---
+    page_size: Mapped[int | None]
+    temporal_discounting: Mapped[bool | None]
+    base_year: Mapped[int | None]
+    decay_rate: Mapped[float | None]
+    include_genre_in_stratification: Mapped[bool | None]
+    popular_threshold: Mapped[float | None]
+    popular_per_page: Mapped[float | None]
+    popular_growth_rate: Mapped[float | None]
+    initial_popular_schedue: Mapped[list[int] | None] = mapped_column(sa.ARRAY(sa.Integer))
+    genre_bucket_size: Mapped[int | None]
+    genre_repr_per_page: Mapped[float | None]
 
 
 class StudyParticipantMovieSession(RssaBase, DateAuditMixin, SoftDeleteMixin):
