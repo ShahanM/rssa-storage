@@ -20,7 +20,7 @@ from rssa_storage.shared.mixins import VersionedRepositoryMixin
 class StudyParticipantRepository(BaseRepository[StudyParticipant]):
     """Repository for StudyParticipant model."""
 
-    SEARCHABLE_COLUMNS = ['id', 'prolific_pid']
+    SEARCHABLE_COLUMNS = ['prolific_pid']
     LOAD_ASSIGNED_CONDITION = (selectinload(StudyParticipant.study_condition),)
 
 
