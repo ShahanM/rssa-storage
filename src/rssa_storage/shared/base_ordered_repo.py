@@ -59,26 +59,19 @@ class BaseOrderedRepository(BaseRepository[ModelType]):
 
         return await super().find_many(options)
 
-    def _apply_ordered_options(
-        self, parent_id: uuid.UUID, options: OrderedRepoQueryOptions | None = None
-    ) -> OrderedRepoQueryOptions:
-        _options = OrderedRepoQueryOptions(filters={self.parent_id_column_name: parent_id})
-        if options is not None:
-            _options = cast(OrderedRepoQueryOptions, merge_repo_query_options(_options, options))
-        _options.sort_by = 'order_position'
-        _options.sort_desc = False
-        _options.limit = 1
-
-        return _options
-
     async def get_first_ordered_instance(
         self,
         parent_id: uuid.UUID,
         options: OrderedRepoQueryOptions | None = None,
     ) -> ModelType | None:
         """Get the first ordered instance for a given parent ID."""
-
-        return await self.find_one(self._apply_ordered_options(parent_id, options))
+        _options = OrderedRepoQueryOptions(filters={self.parent_id_column_name: parent_id})
+        if options is not None:
+            _options = cast(OrderedRepoQueryOptions, merge_repo_query_options(_options, options))
+        _options.sort_by = 'order_position'
+        _options.sort_desc = False
+        _options.limit = 1
+        return await self.find_one(_options)
 
     async def get_next_ordered_instance(
         self, current_instance: ModelType, options: OrderedRepoQueryOptions | None = None
@@ -92,14 +85,43 @@ class BaseOrderedRepository(BaseRepository[ModelType]):
             The next ordered instance or None if not found.
         """
         parent_id = getattr(current_instance, self.parent_id_column_name)
+        _options = OrderedRepoQueryOptions(filters={self.parent_id_column_name: parent_id})
+        if options is not None:
+            _options = merge_repo_query_options(_options, options)
+        _options.sort_by = 'order_position'
+        _options.sort_desc = False
+        if _options.load_columns and 'order_position' not in _options.load_columns:
+            _options.load_columns.append('order_position')
 
-        return await self.find_one(self._apply_ordered_options(parent_id, options))
+        _ordered = await self.find_many(_options)
+        _ordered = sorted(_ordered, key=lambda x: x.order_position)
+
+        index = 0
+        for i in range(len(_ordered)):
+            if _ordered[i].id == current_instance.id:
+                index = i + 1
+                break
+        else:
+            if index == 0:
+                return None
+        return _ordered[index]
 
     async def get_last_ordered_instance(
         self, parent_id: uuid.UUID, options: OrderedRepoQueryOptions
     ) -> ModelType | None:
         """Get the last ordered instance for a given parent ID."""
-        return await self.find_one(self._apply_ordered_options(parent_id, options))
+        _options = OrderedRepoQueryOptions(filters={self.parent_id_column_name: parent_id})
+        if options is not None:
+            _options = merge_repo_query_options(_options, options)
+        _options.sort_by = 'order_position'
+        _options.sort_desc = False
+        if _options.load_columns and 'order_position' not in _options.load_columns:
+            _options.load_columns.append('order_position')
+
+        _ordered = await self.find_many(_options)
+        _ordered = sorted(_ordered, key=lambda x: x.order_position)
+
+        return _ordered[-1]
 
     async def delete_ordered_instance(self, instance_id: uuid.UUID) -> None:
         """Delete ordered instance and update order positions of subsequent instances.

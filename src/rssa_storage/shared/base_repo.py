@@ -479,16 +479,17 @@ class BaseRepository(Generic[T]):
                 query = query.order_by(col_to_sort.asc())
         return query
 
-    async def count(self, options: RepoQueryOptions) -> int:
+    async def count(self, options: RepoQueryOptions | None = None) -> int:
         """Count the total number of instances of the model.
 
         Returns:
             The total number of instances.
         """
         query = select(func.count()).select_from(self.model)
-        if not options.include_deleted:
-            query = self._apply_soft_delete_criteria(query)
-        query = self._apply_filtering_to_query(query, options)
+        if options:
+            if not options.include_deleted:
+                query = self._apply_soft_delete_criteria(query)
+            query = self._apply_filtering_to_query(query, options)
 
         result = await self.db.execute(query)
         return result.scalar_one()
