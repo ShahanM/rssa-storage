@@ -6,6 +6,7 @@ from typing import TYPE_CHECKING
 
 import sqlalchemy as sa
 from sqlalchemy.dialects.postgresql import JSONB
+from sqlalchemy.ext.hybrid import hybrid_property
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from rssa_storage.rssadb.models.rssa_base_models import DBBaseParticipantResponseModel, RssaBase
@@ -66,6 +67,17 @@ class StudyParticipant(RssaBase, DateAuditMixin):
     activity_responses: Mapped[list['ParticipantStudyInteractionResponse']] = relationship(
         'ParticipantStudyInteractionResponse', back_populates='study_participant', viewonly=True
     )
+
+    @hybrid_property
+    def prolific_pid(self) -> str | None:
+        if self.source_meta and isinstance(self.source_meta, dict):
+            return self.source_meta.get('PROLIFIC_PID')
+        return None
+
+    @prolific_pid.inplace.expression
+    @classmethod
+    def _prolific_pid_expression(cls):
+        return cls.source_meta['PROLIFIC_PID'].astext
 
 
 class Demographic(RssaBase, DateAuditMixin):
