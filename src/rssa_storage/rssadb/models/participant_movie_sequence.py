@@ -88,7 +88,7 @@ class StudyParticipantMovieSession(RssaBase, DateAuditMixin, SoftDeleteMixin):
         default=lambda: datetime.now(UTC),
     )
 
-    assigned_list: Mapped[PreShuffledMovieList] = relationship(PreShuffledMovieList, lazy='joined')
+    assigned_list: Mapped[PreShuffledMovieList] = relationship(PreShuffledMovieList, lazy='selectin')
 
     def __repr__(self):
         """String representation of ParticipantMovieSession."""

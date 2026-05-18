@@ -18,6 +18,7 @@ if TYPE_CHECKING:
         ParticipantAttentionCheckResponse,
         ParticipantFreeformResponse,
         ParticipantStudyInteractionResponse,
+        ParticipantSurveyResponse,
     )
     from rssa_storage.rssadb.models.study_components import StudyCondition
 
@@ -59,14 +60,15 @@ class StudyParticipant(RssaBase, DateAuditMixin):
     )
     # View Only Relationships
     attention_check_responses: Mapped[list['ParticipantAttentionCheckResponse']] = relationship(
-        'ParticipantAttentionCheckResponse', back_populates='study_participant', viewonly=True
+        'ParticipantAttentionCheckResponse', lazy='noload', viewonly=True
     )
     freeform_responses: Mapped[list['ParticipantFreeformResponse']] = relationship(
-        'ParticipantFreeformResponse', back_populates='study_participant', viewonly=True
+        'ParticipantFreeformResponse', lazy='noload', viewonly=True
     )
     activity_responses: Mapped[list['ParticipantStudyInteractionResponse']] = relationship(
-        'ParticipantStudyInteractionResponse', back_populates='study_participant', viewonly=True
+        'ParticipantStudyInteractionResponse', lazy='noload', viewonly=True
     )
+    survey_responses: Mapped[list['ParticipantSurveyResponse']] = relationship(lazy='noload', viewonly=True)
 
     @hybrid_property
     def prolific_pid(self) -> str | None:

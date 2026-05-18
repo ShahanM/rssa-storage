@@ -38,21 +38,25 @@ class StudyParticipantContextMixin:
         sa.UUID(),
         sa.ForeignKey('studies.id'),
         nullable=False,
+        index=True,
     )
     study_step_id: Mapped[uuid.UUID] = mapped_column(
         sa.UUID(),
         sa.ForeignKey('study_steps.id'),
         nullable=False,
+        index=True,
     )
     study_step_page_id: Mapped[uuid.UUID | None] = mapped_column(
         sa.UUID(),
         sa.ForeignKey('study_step_pages.id'),
         nullable=True,
+        index=True,
     )
     study_participant_id: Mapped[uuid.UUID] = mapped_column(
         sa.UUID(),
         sa.ForeignKey('study_participants.id'),
         nullable=False,
+        index=True,
     )
     context_tag: Mapped[str] = mapped_column(nullable=False)
     version: Mapped[int] = mapped_column(default=1, server_default=sa.text('1'))

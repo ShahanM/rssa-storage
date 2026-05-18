@@ -12,11 +12,11 @@ from sqlalchemy.dialects.postgresql import JSONB, UUID
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from rssa_storage.rssadb.models.rssa_base_models import DBBaseParticipantResponseModel
-from rssa_storage.rssadb.models.survey_constructs import SurveyScaleLevel
+from rssa_storage.rssadb.models.survey_constructs import SurveyConstruct, SurveyItem, SurveyScaleLevel
 from rssa_storage.shared import DateAuditMixin
 
 if TYPE_CHECKING:
-    from rssa_storage.rssadb.models.study_components import StudyAttentionCheck
+    from rssa_storage.rssadb.models.study_components import StudyAttentionCheck, StudyStep
     from rssa_storage.rssadb.models.study_participants import StudyParticipant
 
 
@@ -53,7 +53,11 @@ class ParticipantSurveyResponse(DBBaseParticipantResponseModel, DateAuditMixin):
         sa.ForeignKey('survey_scale_levels.id', ondelete='CASCADE')
     )
 
-    survey_scale_level: Mapped[Optional['SurveyScaleLevel']] = relationship()
+    survey_construct: Mapped['SurveyConstruct'] = relationship(viewonly=True, lazy='noload')
+    survey_item: Mapped[Optional['SurveyItem']] = relationship(viewonly=True, lazy='noload')
+    survey_scale_level: Mapped[Optional['SurveyScaleLevel']] = relationship(viewonly=True, lazy='noload')
+
+    study_step: Mapped['StudyStep'] = relationship(viewonly=True, lazy='noload')
 
 
 class ParticipantFreeformResponse(DBBaseParticipantResponseModel, DateAuditMixin):
@@ -62,10 +66,7 @@ class ParticipantFreeformResponse(DBBaseParticipantResponseModel, DateAuditMixin
     __tablename__ = 'participant_freeform_responses'
 
     response_text: Mapped[str] = mapped_column(sa.Text)
-
-    study_participant: Mapped['StudyParticipant'] = relationship(
-        'StudyParticipant', back_populates='freeform_responses'
-    )
+    study_participant: Mapped['StudyParticipant'] = relationship('StudyParticipant')
 
     __table_args__ = (
         sa.UniqueConstraint('study_id', 'study_participant_id', 'context_tag', name='uq_freeform_context'),
@@ -108,9 +109,7 @@ class ParticipantStudyInteractionResponse(DBBaseParticipantResponseModel, DateAu
 
     payload_json: Mapped[dict] = mapped_column(JSONB, nullable=False)
 
-    study_participant: Mapped['StudyParticipant'] = relationship(
-        'StudyParticipant', back_populates='activity_responses'
-    )
+    study_participant: Mapped['StudyParticipant'] = relationship('StudyParticipant')
 
     __table_args__ = (
         sa.UniqueConstraint('study_id', 'study_participant_id', 'context_tag', name='uq_study_participant_context_tag'),
@@ -127,7 +126,5 @@ class ParticipantAttentionCheckResponse(DBBaseParticipantResponseModel, DateAudi
     survey_scale_id: Mapped[uuid.UUID] = mapped_column(sa.ForeignKey('survey_scales.id'))
     responded_survey_scale_level_id: Mapped[uuid.UUID | None] = mapped_column(sa.ForeignKey('survey_scale_levels.id'))
 
-    study_participant: Mapped['StudyParticipant'] = relationship(
-        'StudyParticipant', back_populates='attention_check_responses'
-    )
+    study_participant: Mapped['StudyParticipant'] = relationship('StudyParticipant')
     study_attention_check: Mapped['StudyAttentionCheck'] = relationship()
