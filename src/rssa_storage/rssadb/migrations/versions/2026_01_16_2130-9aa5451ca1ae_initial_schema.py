@@ -274,13 +274,14 @@ def upgrade() -> None:
             name=op.f('fk_study_step_page_contents_survey_scale_id'),
             ondelete='CASCADE',
         ),
-        sa.PrimaryKeyConstraint(
-            'study_step_page_id',
-            'survey_construct_id',
-            'survey_scale_id',
-            'id',
-            name=op.f('pk_study_step_page_contents'),
-        ),
+        sa.PrimaryKeyConstraint('id', name=op.f('pk_study_step_page_contents')),
+        # sa.PrimaryKeyConstraint(
+        #     'study_step_page_id',
+        #     'survey_construct_id',
+        #     'survey_scale_id',
+        #     'id',
+        #     name=op.f('pk_study_step_page_contents'),
+        # ),
     )
     op.create_table(
         'feedbacks',

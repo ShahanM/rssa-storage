@@ -31,7 +31,7 @@ def upgrade() -> None:
     op.add_column('study_conditions', sa.Column('authorized_test_code', sa.String(length=16), nullable=True))
 
     # The side effect mentioned in the preamble.
-    op.drop_constraint(op.f('uq_participant_ratings'), 'participant_ratings', type_='unique')
+    # op.drop_constraint(op.f('uq_participant_ratings'), 'participant_ratings', type_='unique')
 
 
 def downgrade() -> None:
