@@ -1,0 +1,52 @@
+services:
+    postgres:
+        image: postgres:16-alpine
+        container_name: rssa_postgres
+        environment:
+            POSTGRES_USER: rssa_dev
+            POSTGRES_PASSWORD: devpassword
+            POSTGRES_DB: defaultdb
+        ports:
+            - "5434:5432"
+        volumes:
+            - postgres_data:/var/lib/postgresql/data
+            - ./scripts/init-all-databases.sh:/docker-entrypoint-initdb.d/init-all-databases.sh
+        networks:
+            - rssa_network
+
+    alembic-runner:
+        build: .
+        container_name: rssa_migrator
+        depends_on:
+            postgres:
+                condition: service_started
+        volumes:
+            - .:/app
+            - /app/.venv
+        working_dir: /app
+        environment:
+            - ENV=development
+            # RSSADB
+            - RSSA_DB_USER=rssa_dev
+            - RSSA_DB_PASSWORD=devpassword
+            - RSSA_DB_HOST=postgres
+            - RSSA_DB_NAME=rssadb
+            # MOVIEDB
+            - MOVIE_DB_USER=rssa_dev
+            - MOVIE_DB_PASSWORD=devpassword
+            - MOVIE_DB_HOST=postgres
+            - MOVIE_DB_NAME=moviedb
+            # TELEMETRYDB
+            - TELEMETRY_DB_USER=rssa_dev
+            - TELEMETRY_DB_PASSWORD=devpassword
+            - TELEMETRY_DB_HOST=postgres
+            - TELEMETRY_DB_NAME=telemetrydb
+        networks:
+            - rssa_network
+
+volumes:
+    postgres_data:
+
+networks:
+    rssa_network:
+        name: rssa_dev_network
