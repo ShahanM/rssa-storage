@@ -3,8 +3,30 @@ set -e
 
 DB_URL="postgresql://rssa_dev:devpassword@rssa_postgres:5432/moviedb"
 DATA_DIR="/app/data/seed_data"
+S3_BASE_URL="https://rssa-models.s3.amazonaws.com/seed_data"
 
 echo "Starting Dataset Ingestion"
+
+mkdir -p $DATA_DIR
+
+echo "Checking for golden dataset files..."
+
+download_if_missing() {
+    local filename=$1
+    if [ ! -f "$DATA_DIR/$filename" ]; then
+        echo "Downloading $filename from S3..."
+        curl -sS -o "$DATA_DIR/$filename" "$S3_BASE_URL/$filename"
+    else
+        echo "$filename already exists. Skipping download."
+    fi
+}
+
+download_if_missing "local_movies.csv"
+download_if_missing "local_movie_emotions.csv"
+download_if_missing "local_movie_recommendation_text.csv"
+download_if_missing "local_reviews.csv"
+download_if_missing "sliced_movielens_ratings.csv"
+download_if_missing "sliced_ieRS_emotions_g20.csv"
 
 echo "Clearing existing data..."
 psql $DB_URL -c "TRUNCATE TABLE movies CASCADE;"
@@ -26,4 +48,5 @@ if [ -f "$DATA_DIR/local_reviews.csv" ]; then
     echo "Ingesting reviews..."
     psql $DB_URL -c "\copy reviews (id, movie_id, review_id, review_text, source) FROM '$DATA_DIR/local_reviews.csv' WITH (FORMAT csv, HEADER true, NULL '\N');"
 fi
+
 echo "Moviedb Seeding Complete"
