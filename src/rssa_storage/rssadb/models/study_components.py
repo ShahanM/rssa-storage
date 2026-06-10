@@ -24,14 +24,7 @@ class ElicitationType(enum.Enum):
 
 
 class ElicitationPolicy(RssaBase, DateAuditMixin, SoftDeleteMixin):
-    """SQLAlchemy model for the 'elicitation_policies' table.
-
-    Attributes:
-        name: Name of the policy.
-        elicitation_type: The ElicitationType.
-        min_threshold: The minimum number to indicate preferences.
-        domain: The category of items.
-    """
+    """SQLAlchemy model for the 'elicitation_policies' table."""
 
     __tablename__ = 'elicitation_policies'
 
@@ -44,15 +37,7 @@ class ElicitationPolicy(RssaBase, DateAuditMixin, SoftDeleteMixin):
 
 
 class Study(RssaBase, DateAuditMixin, SoftDeleteMixin):
-    """SQLAlchemy model for the 'studies' table.
-
-    Attributes:
-        enabled: Indicates if the study is active.
-        name: Name of the study.
-        description: Description of the study.
-        created_by_id: Foreign key to the user who created the study.
-        owner_id: Foreign key to the owner of the study.
-    """
+    """SQLAlchemy model for the 'studies' table."""
 
     __tablename__ = 'studies'
 
@@ -99,16 +84,7 @@ class Study(RssaBase, DateAuditMixin, SoftDeleteMixin):
 
 
 class StudyCondition(RssaBase, DateAuditMixin, SoftDeleteMixin):
-    """SQLAlchemy model for the 'study_conditions' table.
-
-    Attributes:
-        enabled: Indicates if the condition is active.
-        name: Name of the study condition.
-        description: Description of the study condition.
-        recommendation_count: Number of recommendations associated with the condition.
-        study_id: Foreign key to the associated study.
-        created_by_id: Foreign key to the user who created the condition.
-    """
+    """SQLAlchemy model for the 'study_conditions' table."""
 
     __tablename__ = 'study_conditions'
 
@@ -142,21 +118,7 @@ class StudyCondition(RssaBase, DateAuditMixin, SoftDeleteMixin):
 
 
 class StudyStep(RssaOrderedBase, DateAuditMixin, SoftDeleteMixin):
-    """SQLAlchemy model for the 'study_steps' table.
-
-    Attributes:
-        enabled: Indicates if the study step is active.
-        deleted_at: Timestamp of deletion for soft deletes.
-        step_type: Type of the study step.
-        name: Name of the study step.
-        description: Description of the study step.
-        title: Title of the study step.
-        instructions: Instructions for the study step.
-        path: Path associated with the study step.
-        survey_api_root: API root for surveys in the study step.
-        study_id: Foreign key to the associated study.
-        created_by_id: Foreign key to the user who created the step.
-    """
+    """SQLAlchemy model for the 'study_steps' table."""
 
     __tablename__ = 'study_steps'
 
@@ -194,16 +156,7 @@ class StudyStep(RssaOrderedBase, DateAuditMixin, SoftDeleteMixin):
 
 
 class StudyStepPageContent(RssaOrderedBase, DateAuditMixin, SoftDeleteMixin):
-    """SQLAlchemy model for the 'page_contents' table.
-
-    Attributes:
-        enabled: Indicates if the page content is active.
-        created_by_id: Foreign key to the user who created the content.
-        preamble: Preamble text for the page content.
-        page_id: Foreign key to the associated page.
-        construct_id: Foreign key to the associated survey construct.
-        scale_id: Foreign key to the associated construct scale.
-    """
+    """SQLAlchemy model for the 'page_contents' table."""
 
     __tablename__ = 'study_step_page_contents'
 
@@ -261,19 +214,7 @@ class StudyAttentionCheck(RssaBase, DateAuditMixin):
 
 
 class StudyStepPage(RssaOrderedBase, DateAuditMixin, SoftDeleteMixin):
-    """SQLAlchemy model for the 'study_step_pages' table.
-
-    Attributes:
-        enabled: Indicates if the page is active.
-        page_type: Type of the page.
-        name: Name of the page.
-        description: Description of the page.
-        title: Title of the page.
-        instructions: Instructions for the page.
-        created_by_id: Foreign key to the user who created the page.
-        study_id: Foreign key to the associated study.
-        step_id: Foreign key to the associated study step.
-    """
+    """SQLAlchemy model for the 'study_step_pages' table."""
 
     __tablename__ = 'study_step_pages'
 
@@ -303,17 +244,7 @@ class StudyStepPage(RssaOrderedBase, DateAuditMixin, SoftDeleteMixin):
 
 
 class ApiKey(RssaBase, DateAuditMixin):
-    """SQLAlchemy model for the 'api_keys' table.
-
-    Attributes:
-        key_hash: Hashed value of the API key.
-        description: Description of the API key.
-        study_id: Foreign key to the associated study.
-        user_id: Foreign key to the associated user.
-        is_active: Indicates if the API key is active.
-        created_at: Timestamp of creation.
-        last_used_at: Timestamp of last usage.
-    """
+    """SQLAlchemy model for the 'api_keys' table."""
 
     __tablename__ = 'api_keys'
 
@@ -331,13 +262,7 @@ class ApiKey(RssaBase, DateAuditMixin):
 
 
 class StudyAuthorization(RssaBase, DateAuditMixin):
-    """SQLAlchemy model for the 'study_authorizations' table.
-
-    Attributes:
-        study_id: Foreign key to the associated study.
-        user_id: Foreign key to the authorized user.
-        role: The role/permission level granted (e.g., 'viewer', 'editor', 'admin').
-    """
+    """SQLAlchemy model for the 'study_authorizations' table."""
 
     __tablename__ = 'study_authorizations'
 
@@ -357,15 +282,7 @@ class StudyAuthorization(RssaBase, DateAuditMixin):
 
 
 class User(RssaBase, DateAuditMixin):
-    """SQLAlchemy model for the 'users' table.
-
-    Attributes:
-        auth0_sub: Unique Auth0 subject identifier.
-        created_at: Timestamp of creation.
-        studies_owned: List of studies owned by the user.
-        studies_created: List of studies created by the user.
-        api_keys: List of API keys associated with the user.
-    """
+    """SQLAlchemy model for the 'users' table."""
 
     __tablename__ = 'users'
 

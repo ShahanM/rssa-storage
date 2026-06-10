@@ -10,3 +10,8 @@ src/rssa_storage/.*
 src/rssa_storage/*/.*
 src/rssa_storage/*/*.bak
 src/rssa_storage/*/*.back
+data/
+.venv/
+.ruff_cache/
+.pytest_cache/
+notes/

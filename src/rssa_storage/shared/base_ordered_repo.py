@@ -25,13 +25,7 @@ class BaseOrderedRepository(BaseRepository[ModelType]):
         model: type[ModelType] | None = None,
         parent_id_column_name: str | None = None,
     ):
-        """Initialize the BaseOrderedRepository.
-
-        Args:
-            db: The database session.
-            model: The model class.
-            parent_id_column_name: The name of the parent ID column in the model.
-        """
+        """Initialize the BaseOrderedRepository with an additional parent_id_column_name."""
         super().__init__(db, model)
 
         if parent_id_column_name:
@@ -76,14 +70,7 @@ class BaseOrderedRepository(BaseRepository[ModelType]):
     async def get_next_ordered_instance(
         self, current_instance: ModelType, options: OrderedRepoQueryOptions | None = None
     ) -> ModelType | None:
-        """Get the next ordered instance after the current instance.
-
-        Args:
-            current_instance: The current ordered instance.
-
-        Returns:
-            The next ordered instance or None if not found.
-        """
+        """Get the next ordered instance after the current instance."""
         parent_id = getattr(current_instance, self.parent_id_column_name)
         _options = OrderedRepoQueryOptions(filters={self.parent_id_column_name: parent_id})
         if options is not None:
@@ -124,14 +111,7 @@ class BaseOrderedRepository(BaseRepository[ModelType]):
         return _ordered[-1]
 
     async def delete_ordered_instance(self, instance_id: uuid.UUID) -> None:
-        """Delete ordered instance and update order positions of subsequent instances.
-
-        Args:
-            instance_id: The ID of the instance to delete.
-
-        Returns:
-            None
-        """
+        """Delete ordered instance and update order positions of subsequent instances."""
         instance = await self.find_one(RepoQueryOptions(filters={'id': instance_id}))
 
         if instance:
@@ -150,14 +130,7 @@ class BaseOrderedRepository(BaseRepository[ModelType]):
             await self.db.flush()
 
     async def purge_ordered_instance(self, instance_id: uuid.UUID) -> None:
-        """Purge ordered instance from the database (non-reversible).
-
-        Args:
-            instance_id: The ID of the instance to purge.
-
-        Returns:
-            None
-        """
+        """Purge ordered instance from the database (non-reversible)."""
         instance = await self.find_one(RepoQueryOptions(filters={'id': instance_id}, include_deleted=True))
 
         if instance:
@@ -176,15 +149,7 @@ class BaseOrderedRepository(BaseRepository[ModelType]):
             await self.db.flush()
 
     async def reorder_ordered_instances(self, parent_id: uuid.UUID, instances_map: dict[uuid.UUID, int]) -> None:
-        """Reorder ordered instances based on the provided mapping.
-
-        Args:
-            parent_id: The parent ID.
-            instances_map: A mapping of instance IDs to their new order positions.
-
-        Returns:
-            None
-        """
+        """Reorder ordered instances based on the provided mapping."""
         if not instances_map:
             return
 

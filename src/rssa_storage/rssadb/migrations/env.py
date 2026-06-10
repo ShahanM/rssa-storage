@@ -1,4 +1,4 @@
-# import sys
+import os
 from logging.config import fileConfig
 
 from alembic import context
@@ -14,7 +14,9 @@ if config.config_file_name is not None:
 
 target_metadata = Base.metadata
 
-db_url = create_db_url(env_prefix='RSSA_DB', is_async=False, use_neon=True)
+is_local_dev = os.environ.get('ENV') == 'development'
+
+db_url = create_db_url(env_prefix='RSSA_DB', is_async=False, use_neon=not is_local_dev)
 config.set_main_option('sqlalchemy.url', db_url)
 
 

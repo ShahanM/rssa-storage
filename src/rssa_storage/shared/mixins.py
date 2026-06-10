@@ -2,13 +2,14 @@ import uuid
 from typing import Any, Protocol
 
 from sqlalchemy import update
+from sqlalchemy.orm import Mapped
 
 
 class VersionedModel(Protocol):
     """Protocol for models that support versioning."""
 
-    id: uuid.UUID
-    version: int
+    id: Mapped[uuid.UUID]
+    version: Mapped[int]
 
 
 class VersionedRepositoryMixin:
@@ -21,16 +22,7 @@ class VersionedRepositoryMixin:
     model: type[VersionedModel]
 
     async def update_response(self, instance_id: uuid.UUID, update_data: dict[str, Any], client_version: int) -> bool:
-        """Update a versioned instance with optimistic concurrency control.
-
-        Args:
-            instance_id: The UUID of the instance to update.
-            update_data: A dictionary of fields to update.
-            client_version: The version number provided by the client.
-
-        Returns:
-            True if the update was successful, False if there was a version conflict.
-        """
+        """Update a versioned instance with optimistic concurrency control."""
         update_fields = {**update_data, 'version': client_version + 1}
 
         update_stmt = (

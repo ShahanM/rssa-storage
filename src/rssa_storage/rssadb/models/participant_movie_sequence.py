@@ -19,13 +19,6 @@ class PreShuffledMovieList(RssaBase, DateAuditMixin, SoftDeleteMixin):
     """SQLAlchemy model for the 'pre_shuffled_movie_lists' table.
 
     Stores pre-generated, fully shuffled lists of movie UUIDs.
-
-    Attributes:
-        list_id (int): Primary key, auto-incremented.
-        movie_ids (List[uuid.UUID]): Ordered list of movie UUIDs.
-        subset_desc (str): Description of the movie subset.
-        seed (int): Seed used for shuffling.
-        created_at (datetime): Timestamp of creation.
     """
 
     __tablename__ = 'pre_shuffled_movie_lists'
@@ -34,7 +27,7 @@ class PreShuffledMovieList(RssaBase, DateAuditMixin, SoftDeleteMixin):
     seed: Mapped[int] = mapped_column(default=generate_seed)
     movie_ids: Mapped[list[uuid.UUID]] = mapped_column(sa.ARRAY(sa.UUID()), nullable=False)
 
-    # --- Filtering Parameters ---
+    # Filtering Parameters
     strategy: Mapped[str | None] = mapped_column(sa.String(100))
     year_min: Mapped[int | None]
     year_max: Mapped[int | None]
@@ -43,7 +36,7 @@ class PreShuffledMovieList(RssaBase, DateAuditMixin, SoftDeleteMixin):
     exclude_no_emotions: Mapped[bool] = mapped_column(default=False, server_default=sa.text('FALSE'))
     exclude_no_recommendations: Mapped[bool] = mapped_column(default=False, server_default=sa.text('FALSE'))
 
-    # --- Algorithm Parameters ---
+    # Algorithm Parameters
     page_size: Mapped[int | None]
     temporal_discounting: Mapped[bool | None]
     base_year: Mapped[int | None]
@@ -62,13 +55,6 @@ class StudyParticipantMovieSession(RssaBase, DateAuditMixin, SoftDeleteMixin):
     """SQLAlchemy model for the 'study_participant_movie_sessions' table.
 
     Tracks each participant's assigned movie list and their current progress.
-
-    Attributes:
-        study_participant_id (uuid.UUID): Primary key, references the participant.
-        assigned_list_id (int): Foreign key to the assigned pre-shuffled movie list.
-        current_offset (int): Current position in the movie list.
-        created_at (datetime): Timestamp of session creation.
-        last_accessed_at (datetime): Timestamp of last access to the session.
     """
 
     __tablename__ = 'study_participant_movie_sessions'

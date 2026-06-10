@@ -28,20 +28,10 @@ def is_soft_deletable(instance: Any) -> TypeGuard[SoftDeletable]:
 
 
 class BaseRepository(Generic[T]):
-    """Base repository providing generic CRUD operations for SQLAlchemy models.
-
-    Attributes:
-        db (AsyncSession): The asynchronous database session.
-        model (Type[T]): The SQLAlchemy model class.
-    """
+    """Base repository providing generic CRUD operations for SQLAlchemy models."""
 
     def __init__(self, db: AsyncSession, model: type[T] | None = None):
-        """Initialize the BaseRepository.
-
-        Args:
-            db: The asynchronous database session.
-            model: The SQLAlchemy model class.
-        """
+        """Initialize the BaseRepository."""
         self.db = db
 
         if model:
@@ -174,13 +164,7 @@ class BaseRepository(Generic[T]):
         return query
 
     def _apply_range_filters(self, query: Select, ranges: list[tuple[str, str, Any]]) -> Select:
-        """Apply range filters (>=, <=) to the query.
-
-        Args:
-            query: The SQLAlchemy Select query.
-            ranges: List of tuples (column_name, operator, value).
-                    Operator can be '>=', '<=', '>', '<'.
-        """
+        """Apply range filters (>=, <=) to the query."""
         for col_name, op, value in ranges:
             col_attr = getattr(self.model, col_name, None)
             if col_attr is not None:
@@ -195,12 +179,7 @@ class BaseRepository(Generic[T]):
         return query
 
     def _apply_not_null_filters(self, query: Select, columns: list[str]) -> Select:
-        """Apply IS NOT NULL filters to specific columns or relationships.
-
-        Args:
-            query: The SQLAlchemy Select query.
-            columns: List of column/relationship names to check for existence (NOT NULL).
-        """
+        """Apply IS NOT NULL filters to specific columns or relationships."""
         mapper = inspect(self.model)
 
         for col_name in columns:
@@ -217,12 +196,7 @@ class BaseRepository(Generic[T]):
         return query
 
     def _apply_ilike_filters(self, query: Select, filters: dict[str, str]) -> Select:
-        """Apply ILIKE filters to specific columns.
-
-        Args:
-            query: The SQLAlchemy Select query.
-            filters: Dictionary of {column_name: search_string}.
-        """
+        """Apply ILIKE filters to specific columns."""
         for col_name, value in filters.items():
             col_attr = getattr(self.model, col_name, None)
             if col_attr is not None:
@@ -230,14 +204,7 @@ class BaseRepository(Generic[T]):
         return query
 
     def _apply_soft_delete_filter(self, query: Select) -> Select:
-        """Modify the query to exclude soft-deleted records.
-
-        Args:
-            query: The SQLAlchemy Select query to modify.
-
-        Returns:
-            The modified Select query excluding soft-deleted records.
-        """
+        """Modify the query to exclude soft-deleted records."""
         deleted_attr = getattr(self.model, 'deleted_at', None)
         if deleted_attr is not None:
             query = query.where(deleted_attr.is_(None))
@@ -257,14 +224,7 @@ class BaseRepository(Generic[T]):
         return query
 
     async def find_many(self, options: RepoQueryOptions | None = None) -> Sequence[T]:
-        """Find multiple instances based on the provided query options.
-
-        Args:
-            options: The query options to apply.
-
-        Returns:
-            A list of instances matching the query options.
-        """
+        """Find multiple instances based on the provided query options."""
         options = options or RepoQueryOptions()
         query = select(self.model)
         query = self._apply_query_options(query, options)
@@ -273,14 +233,7 @@ class BaseRepository(Generic[T]):
         return result.scalars().all()
 
     async def find_one(self, options: RepoQueryOptions | None = None) -> T | None:
-        """Find a single instance based on the provided query options.
-
-        Args:
-            options: The query options to apply.
-
-        Returns:
-            An instance matching the query options, or None if not found.
-        """
+        """Find a single instance based on the provided query options."""
         options = options or RepoQueryOptions()
         query = select(self.model)
         query = self._apply_query_options(query, options)
@@ -321,14 +274,7 @@ class BaseRepository(Generic[T]):
         return result.scalars().first()
 
     async def create(self, instance: T) -> T:
-        """Create a new instance in the database.
-
-        Args:
-            instance: The instance to create.
-
-        Returns:
-            The created instance.
-        """
+        """Create a new instance in the database."""
         try:
             self.db.add(instance)
             await self.db.flush()
@@ -343,28 +289,13 @@ class BaseRepository(Generic[T]):
             raise e
 
     async def create_all(self, instances: list[T]) -> list[T]:
-        """Create multiple instances in the database.
-
-        Args:
-            instances: A list of instances to create.
-
-        Returns:
-            The list of created instances.
-        """
+        """Create multiple instances in the database."""
         self.db.add_all(instances)
         await self.db.flush()
         return instances
 
     async def update(self, instance_id: uuid.UUID, updated_fields: dict[str, Any]) -> T | None:
-        """Update an instance in the database.
-
-        Args:
-            instance_id: The ID of the instance to update.
-            updated_fields: A dictionary of fields to update.
-
-        Returns:
-            The updated instance or None if not found.
-        """
+        """Update an instance in the database."""
         instance = await self.find_one(RepoQueryOptions(ids=[instance_id]))
         if instance:
             for field_name, value in updated_fields.items():
@@ -374,14 +305,7 @@ class BaseRepository(Generic[T]):
         return None
 
     async def delete(self, instance_id: uuid.UUID) -> bool:
-        """Delete an instance from the database.
-
-        Args:
-            instance_id: The ID of the instance to delete.
-
-        Returns:
-            True if the instance was deleted, False otherwise.
-        """
+        """Delete an instance from the database."""
         instance = await self.find_one(RepoQueryOptions(ids=[instance_id]))
         if instance:
             if is_soft_deletable(instance):
@@ -395,21 +319,11 @@ class BaseRepository(Generic[T]):
         return False
 
     async def batch_update(self, update_data: Sequence[dict[str, Any]]) -> bool:
-        """Update multiple instances in a single batch operation.
-
-        Args:
-            update_data: A list of dictionaries. Each dictionary MUST contain
-                        the primary key field (e.g., 'id') to identify the
-                        target record, along with the specific fields to update.
-
-        Returns:
-            True if the batch update executed successfully, False if no data was provided.
-        """
+        """Update multiple instances in a single batch operation."""
         if not update_data:
             return False
 
         try:
-            # SQLAlchemy 2.0 bulk update: pass the update construct and the list of mappings
             await self.db.execute(update(self.model), update_data)
             await self.db.flush()
             return True
@@ -420,16 +334,7 @@ class BaseRepository(Generic[T]):
     def _filter_similar(
         self, query: Select, filter_str: str | None = None, filter_cols: list[str] | None = None
     ) -> Select:
-        """Add search filters to the query based on specified columns.
-
-        Args:
-            query: The SQLAlchemy Select query to modify.
-            filter_str: The search string to filter by.
-            filter_cols: A list of column names to apply the search filter on.
-
-        Returns:
-            The modified Select query with search filters applied.
-        """
+        """Add search filters to the query based on specified columns."""
         if filter_str and filter_cols:
             search_pattern = f'%{filter_str}%'
             conditions = []
@@ -441,15 +346,7 @@ class BaseRepository(Generic[T]):
         return query
 
     def _filter(self, query: Select, filters: dict[str, Any]) -> Select:
-        """Add exact match filters to the query based on specified columns.
-
-        Args:
-            query: The SQLAlchemy Select query to modify.
-            filters: A list of tuples where each tuple contains a field name and its corresponding value.
-
-        Returns:
-            The modified Select query with exact match filters applied.
-        """
+        """Add exact match filters to the query based on specified columns."""
         for col_name, col_val in filters.items():
             col_attr = getattr(self.model, col_name)
             if col_attr is not None:
@@ -461,16 +358,7 @@ class BaseRepository(Generic[T]):
         return query
 
     def _sort(self, query: Select, sort_by: str, desc: bool = False) -> Select:
-        """Sort the query by a specified column and direction.
-
-        Args:
-            query: The SQLAlchemy Select query to modify.
-            sort_by: The column name to sort by.
-            sort_dir: The direction of sorting ('asc' or 'desc').
-
-        Returns:
-            The modified Select query with sorting applied.
-        """
+        """Sort the query by a specified column and direction."""
         col_to_sort = getattr(self.model, sort_by, None)
         if col_to_sort is not None:
             if desc:
@@ -480,11 +368,7 @@ class BaseRepository(Generic[T]):
         return query
 
     async def count(self, options: RepoQueryOptions | None = None) -> int:
-        """Count the total number of instances of the model.
-
-        Returns:
-            The total number of instances.
-        """
+        """Count the total number of instances of the model."""
         query = select(func.count()).select_from(self.model)
         if options:
             if not options.include_deleted:

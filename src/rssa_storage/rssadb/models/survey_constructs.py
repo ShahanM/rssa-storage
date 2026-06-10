@@ -15,17 +15,7 @@ if TYPE_CHECKING:
 
 
 class SurveyItem(RssaOrderedBase, DateAuditMixin, SoftDeleteMixin, EnabledMixin):
-    """SQLAlchemy model for the 'construct_items' table.
-
-    Attributes:
-        enabled: Indicates if the item is enabled.
-        deleted_at: Timestamp of deletion.
-        text: The text of the construct item.
-        notes: Additional notes about the item.
-        order_position: Position of the item in an ordered list.
-        created_by_id: Foreign key to the user who created the item.
-        construct_id: Foreign key to the associated survey construct.
-    """
+    """SQLAlchemy model for the 'construct_items' table."""
 
     __tablename__ = 'survey_items'
 
@@ -40,14 +30,7 @@ class SurveyItem(RssaOrderedBase, DateAuditMixin, SoftDeleteMixin, EnabledMixin)
 
 
 class SurveyConstruct(RssaBase, DateAuditMixin, SoftDeleteMixin):
-    """SQLAlchemy model for the 'survey_constructs' table.
-
-    Attributes:
-        deleted_at: Timestamp of deletion.
-        name: Name of the survey construct.
-        description: Description of the survey construct.
-        created_by_id: Foreign key to the user who created the construct
-    """
+    """SQLAlchemy model for the 'survey_constructs' table."""
 
     __tablename__ = 'survey_constructs'
 
@@ -66,15 +49,7 @@ class SurveyConstruct(RssaBase, DateAuditMixin, SoftDeleteMixin):
 
 
 class SurveyScale(RssaBase, DateAuditMixin, SoftDeleteMixin, EnabledMixin):
-    """SQLAlchemy model for the 'construct_scales' table.
-
-    Attributes:
-        enabled: Indicates if the survey scale is enabled.
-        deleted_at (Optional[datetime]): Timestamp of deletion.
-        name: Name of the survey survey scale.
-        description: Description of the survey scale.
-        created_by_id: Foreign key to the user who created the scale.
-    """
+    """SQLAlchemy model for the 'construct_scales' table."""
 
     __tablename__ = 'survey_scales'
 
@@ -95,18 +70,7 @@ class SurveyScale(RssaBase, DateAuditMixin, SoftDeleteMixin, EnabledMixin):
 
 
 class SurveyScaleLevel(RssaOrderedBase, DateAuditMixin, SoftDeleteMixin, EnabledMixin):
-    """SQLAlchemy model for the 'survey_scale_levels' table.
-
-    Attributes:
-        enabled: Indicates if the survey scale level is enabled.
-        deleted_at: Timestamp of deletion.
-        label: Label of the survey scale level.
-        notes: Additional notes about the survey_scale level.
-        value: Numeric value of the survey scale level.
-        order_position: Position of the survey scale level in an ordered list.
-        created_by_id: Foreign key to the user who created the survey scale level.
-        scale_id: Foreign key to the associated survey scale.
-    """
+    """SQLAlchemy model for the 'survey_scale_levels' table."""
 
     __tablename__ = 'survey_scale_levels'
 

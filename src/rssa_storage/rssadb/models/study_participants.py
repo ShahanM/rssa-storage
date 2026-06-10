@@ -24,18 +24,7 @@ if TYPE_CHECKING:
 
 
 class StudyParticipant(RssaBase, DateAuditMixin):
-    """SQLAlchemy model for the 'study_participants' table.
-
-    Attributes:
-        study_id: Foreign key to the study.
-        discarded: Indicates if the participant is discarded.
-        study_participant_type_id: Foreign key to the participant type.
-        external_id: External identifier for the participant.
-        study_condition_id: Foreign key to the study condition.
-        current_status: Current status of the participant (e.g., 'active', 'completed').
-        current_step_id: Foreign key to the current study step.
-        current_page_id (Optional[uuid.UUID]): Foreign key to the current step page.
-    """
+    """SQLAlchemy model for the 'study_participants' table."""
 
     __tablename__ = 'study_participants'
 
@@ -50,7 +39,6 @@ class StudyParticipant(RssaBase, DateAuditMixin):
     current_step_id: Mapped[uuid.UUID] = mapped_column(sa.ForeignKey('study_steps.id'))
     current_page_id: Mapped[uuid.UUID | None] = mapped_column(sa.ForeignKey('study_step_pages.id'))
 
-    # Relationships
     participant_study_session: Mapped['ParticipantStudySession'] = relationship(
         'ParticipantStudySession', back_populates='study_participant', cascade='all, delete-orphan'
     )
@@ -58,7 +46,6 @@ class StudyParticipant(RssaBase, DateAuditMixin):
     demographics: Mapped[list['Demographic']] = relationship(
         'Demographic', back_populates='study_participant', cascade='all, delete-orphan'
     )
-    # View Only Relationships
     attention_check_responses: Mapped[list['ParticipantAttentionCheckResponse']] = relationship(
         'ParticipantAttentionCheckResponse', lazy='noload', viewonly=True
     )
@@ -83,21 +70,7 @@ class StudyParticipant(RssaBase, DateAuditMixin):
 
 
 class Demographic(RssaBase, DateAuditMixin):
-    """SQLAlchemy model for the 'demographics' table.
-
-    Attributes:
-        study_participant_id: Foreign key to the study participant.
-        age_range: Age range of the participant.
-        gender: Gender of the participant.
-        gender_other: Other gender specification.
-        race: Race of the participant.
-        race_other: Other race specification.
-        education: Education level of the participant.
-        country: Country of residence.
-        state_region: State or region of residence.
-        version: Version of the demographic record.
-        discarded: Indicates if the demographic record is discarded.
-    """
+    """SQLAlchemy model for the 'demographics' table."""
 
     __tablename__ = 'participant_demographics'
 

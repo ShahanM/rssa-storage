@@ -9,14 +9,7 @@ load_dotenv()
 
 
 def create_db_url(env_prefix: str, is_async: bool = False, use_neon: bool = False) -> str:
-    """
-    Creates a database URL dynamically based on an environment variable prefix.
-
-    Args:
-        env_prefix: The prefix for your env vars (e.g., 'RSSA_DB', 'MOVIE_DB')
-        is_async: If True, uses asyncpg. If False, uses psycopg2.
-        use_neon: If True, appends Neon-specific SSL parameters.
-    """
+    """Creates a database URL dynamically based on an environment variable prefix."""
     dbuser = os.environ.get(f'{env_prefix}_USER', os.environ.get('PGUSER', ''))
     dbpass = os.environ.get(f'{env_prefix}_PASSWORD', os.environ.get('PGPASSWORD', ''))
     dbhost = os.environ.get(f'{env_prefix}_HOST', os.environ.get('PGHOST', ''))

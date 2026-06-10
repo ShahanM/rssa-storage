@@ -21,10 +21,6 @@ class BaseParticipantResponseRepository(BaseRepository[ModelType], VersionedRepo
     """Base repository for participant responses.
 
     Inherits from BaseRepository to provide CRUD operations for participant response models.
-
-    Attributes:
-        db: The database session.
-        model: The participant response model class.
     """
 
     pass

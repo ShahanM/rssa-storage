@@ -71,27 +71,14 @@ class StudyAuthorizationRepository(BaseRepository[StudyAuthorization]):
 
 
 class StudyStepRepository(BaseOrderedRepository[StudyStep]):
-    """Repository for StudyStep model.
-
-    Attributes:
-        parent_id_column_name: Configured the BaseOrderedRepository to use 'study_id' as the parent ID column.
-    """
+    """Repository for StudyStep model."""
 
     parent_id_column_name: str = 'study_id'
 
     async def validate_path_uniqueness(
         self, study_id: uuid.UUID, path: str, exclude_step_id: uuid.UUID | None = None
     ) -> bool:
-        """Validate that a StudyStep path is unique within a study, optionally excluding a specific step ID.
-
-        Args:
-            study_id: The UUID of the study.
-            path: The path to validate.
-            exclude_step_id: An optional UUID of a step to exclude from the check.
-
-        Returns:
-            True if the path is unique within the study, False otherwise.
-        """
+        """Validate that a StudyStep path is unique within a study, optionally excluding a specific step ID."""
         query = select(StudyStep.id).where(and_(StudyStep.study_id == study_id, StudyStep.path == path))
         if exclude_step_id:
             query = query.where(StudyStep.id != exclude_step_id)
@@ -105,11 +92,7 @@ class StudyStepRepository(BaseOrderedRepository[StudyStep]):
 
 
 class StudyStepPageRepository(BaseOrderedRepository[StudyStepPage]):
-    """Repository for StudyStepPage model.
-
-    Attributes:
-        parent_id_column_name: Configured the BaseOrderedRepository to use 'study_id' as the parent ID column.
-    """
+    """Repository for StudyStepPage model."""
 
     parent_id_column_name: str = 'study_step_id'
 
@@ -126,25 +109,12 @@ class StudyStepPageRepository(BaseOrderedRepository[StudyStepPage]):
 
 
 class StudyConditionRepository(BaseRepository[StudyCondition]):
-    """Repository for StudyCondition model.
-
-    Attributes:
-        db: The database session.
-        model: The StudyCondition model class.
-    """
+    """Repository for StudyCondition model."""
 
     async def get_participant_count_by_condition(
         self, study_id: uuid.UUID, enabled_only: bool = False, verified_participants_only: bool = False
     ) -> list[Row[tuple[uuid.UUID, str, int]]]:
-        """Get participant counts grouped by study conditions for a specific study.
-
-        Args:
-            study_id: The UUID of the study.
-            enabled_only: Whether to exclusively include enabled conditions in the count.
-
-        Returns:
-            A list of rows containing condition ID, condition name, and participant count.
-        """
+        """Get participant counts grouped by study conditions for a specific study."""
         join_conditions = [
             StudyParticipant.study_condition_id == StudyCondition.id,
             StudyParticipant.discarded.is_(False),
@@ -172,11 +142,7 @@ class StudyConditionRepository(BaseRepository[StudyCondition]):
 
 
 class StudyStepPageContentRepository(BaseOrderedRepository[StudyStepPageContent]):
-    """Repository for PageContent model.
-
-    Attributes:
-        parent_id_column_name: Configured the BaseOrderedRepository to use 'study_step_page_id' as the parent ID column.
-    """
+    """Repository for PageContent model."""
 
     parent_id_column_name: str = 'study_step_page_id'
 
@@ -191,16 +157,7 @@ class StudyStepPageContentRepository(BaseOrderedRepository[StudyStepPageContent]
         limit: int | None = None,
         include_deleted: bool = False,
     ) -> Sequence[StudyStepPageContent]:
-        """Get all ordered instances for a given parent ID with detailed load options.
-
-        Args:
-            parent_id: The parent ID.
-            limit: Optional limit on the number of instances to retrieve.
-            include_deleted: Whether to include soft-deleted instances.
-
-        Returns:
-            A list of ordered instances with relationships loaded.
-        """
+        """Get all ordered instances for a given parent ID with detailed load options."""
         options = OrderedRepoQueryOptions(
             filters={self.parent_id_column_name: parent_id},
             sort_by='order_position',
