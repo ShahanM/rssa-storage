@@ -15,7 +15,7 @@ download_if_missing() {
     local filename=$1
     if [ ! -f "$DATA_DIR/$filename" ]; then
         echo "Downloading $filename from S3..."
-        curl -sS -o "$DATA_DIR/$filename" "$S3_BASE_URL/$filename"
+        curl -f -sS -o "$DATA_DIR/$filename" "$S3_BASE_URL/$filename"
     else
         echo "$filename already exists. Skipping download."
     fi
@@ -24,7 +24,6 @@ download_if_missing() {
 download_if_missing "local_movies.csv"
 download_if_missing "local_movie_emotions.csv"
 download_if_missing "local_movie_recommendation_text.csv"
-download_if_missing "local_reviews.csv"
 download_if_missing "sliced_movielens_ratings.csv"
 download_if_missing "sliced_ieRS_emotions_g20.csv"
 
