@@ -26,6 +26,10 @@ class SurveyItem(RssaOrderedBase, DateAuditMixin, SoftDeleteMixin, EnabledMixin)
         sa.ForeignKey('survey_constructs.id', ondelete='CASCADE'), nullable=False
     )
 
+    is_negative: Mapped[bool] = mapped_column(
+        sa.Boolean, nullable=False, default=False, server_default=sa.text('false')
+    )
+
     survey_construct: Mapped['SurveyConstruct'] = relationship('SurveyConstruct', back_populates='survey_items')
 
 
