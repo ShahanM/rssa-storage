@@ -4,7 +4,7 @@ import uuid
 from collections.abc import Sequence
 from typing import Any, Generic, Protocol, TypeGuard, TypeVar, get_args
 
-from sqlalchemy import Select, UniqueConstraint, and_, func, inspect, or_, select, update
+from sqlalchemy import Boolean, Select, UniqueConstraint, and_, func, inspect, or_, select, update
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import InstrumentedAttribute, load_only, selectinload, with_loader_criteria
@@ -294,12 +294,44 @@ class BaseRepository(Generic[T]):
         await self.db.flush()
         return instances
 
+    def _coerce_boolean(self, value: Any) -> bool | None:
+        """Helper to cleanly parse strict obolean states from strings."""
+        if value is None:
+            return None
+        if isinstance(value, str):
+            return value.strip().lower() == 'true'
+        return bool(value)
+
     async def update(self, instance_id: uuid.UUID, updated_fields: dict[str, Any]) -> T | None:
         """Update an instance in the database."""
+        mapper = inspect(self.model)
+        cleaned_fields = {}
+
+        for field_name, value in updated_fields.items():
+            if field_name not in mapper.columns:
+                continue
+
+            column = mapper.columns[field_name]
+
+            if column.primary_key:
+                continue
+
+            if isinstance(column.type, Boolean):
+                coerced = self._coerce_boolean(value)
+                if coerced is None and not column.nullable:
+                    cleaned_fields[field_name] = False
+                else:
+                    cleaned_fields[field_name] = coerced
+            else:
+                cleaned_fields[field_name] = value
+
+        if not cleaned_fields:
+            return None
+
         instance = await self.find_one(RepoQueryOptions(ids=[instance_id]))
         if instance:
-            for field_name, value in updated_fields.items():
-                setattr(instance, field_name, value)
+            for field_name, coerced_value in cleaned_fields.items():
+                setattr(instance, field_name, coerced_value)
             await self.db.flush()
             return instance
         return None
