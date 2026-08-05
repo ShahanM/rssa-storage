@@ -106,6 +106,10 @@ class BaseOrderedRepository(BaseRepository[ModelType]):
             _options.load_columns.append('order_position')
 
         _ordered = await self.find_many(_options)
+        if not _ordered:
+            return None
+        if len(_ordered) == 1:
+            return _ordered[0]
         _ordered = sorted(_ordered, key=lambda x: x.order_position)
 
         return _ordered[-1]
